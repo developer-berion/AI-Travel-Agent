@@ -1,0 +1,22 @@
+{
+  "name": "@alana/orchestration",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "lint": "biome check src",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@alana/database": "workspace:*",
+    "@alana/domain": "workspace:*",
+    "@alana/hotelbeds": "workspace:*",
+    "@alana/shared": "workspace:*",
+    "openai": "^6.27.0"
+  }
+}

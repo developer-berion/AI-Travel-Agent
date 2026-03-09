@@ -1,0 +1,2 @@
+-- Seed placeholder for local Supabase runs.
+-- Runtime currently uses the mock repository until real Supabase wiring is connected.

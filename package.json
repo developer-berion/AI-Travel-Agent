@@ -1,0 +1,29 @@
+{
+  "name": "alana-ai-travel-quoting-os",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.6.0",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "test:e2e": "pnpm --filter @alana/web test:e2e",
+    "typecheck": "turbo run typecheck",
+    "format": "biome check --write .",
+    "check": "pnpm lint && pnpm typecheck && pnpm test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "catalog:tooling",
+    "@types/node": "catalog:tooling",
+    "turbo": "catalog:tooling",
+    "typescript": "catalog:tooling",
+    "vitest": "catalog:tooling"
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/react": "catalog:react",
+      "@types/react-dom": "catalog:react"
+    }
+  }
+}
