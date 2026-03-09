@@ -93,3 +93,27 @@ El pipeline base corre en `GitHub Actions` sobre Linux y valida:
 - Playwright smoke E2E
 
 `Vercel Hobby` y `Supabase Free` se aceptan solo hasta piloto interno. Antes de piloto real se eleva el gate minimo a `Vercel Pro` y Supabase con backups/PITR.
+
+## Staging hosted
+
+Estado activado el `2026-03-09`:
+
+- GitHub canonico: `developer-berion/AI-Travel-Agent`
+- Supabase staging: `uaqzreazqxhseyriulbt`
+- Vercel staging: `alana-ai-agent`
+- URL canonica actual: `https://alana-ai-agent.vercel.app`
+
+Lo que ya quedo activo:
+
+- `AUTH_MODE=supabase` en hosted
+- `QUOTE_REPOSITORY_MODE=supabase` en hosted
+- `Supabase Auth` en modo `invite-only`
+- `site_url` y redirects de auth alineados al staging actual
+- primer admin invitado a `victor@alanatours.com`
+- deploy manual exitoso del workbench actual a `https://alana-ai-agent.vercel.app`
+
+Bloqueos externos vigentes:
+
+- `GitHub branch protection` para repo privado no pudo activarse con el plan actual y devuelve `403 Upgrade to GitHub Pro or make this repository public`
+- `Vercel Git integration` no pudo reemplazar el repo anterior por `developer-berion/AI-Travel-Agent` porque la integracion de GitHub de Vercel no tiene acceso al repo privado nuevo
+- `AI_PROVIDER=openai` no se activo en hosted porque falta `OPENAI_API_KEY`

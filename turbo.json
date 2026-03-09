@@ -3,7 +3,27 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "dist/**", "coverage/**"]
+      "env": [
+        "AUTH_MODE",
+        "QUOTE_REPOSITORY_MODE",
+        "AI_PROVIDER",
+        "NEXT_PUBLIC_APP_NAME",
+        "NEXT_PUBLIC_API_BASE_URL",
+        "NEXT_PUBLIC_SUPABASE_URL",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "SUPABASE_URL",
+        "SUPABASE_ANON_KEY",
+        "SUPABASE_SERVICE_ROLE_KEY",
+        "OPENAI_API_KEY",
+        "OPENAI_MODEL",
+        "OPENAI_REASONING_INTAKE",
+        "OPENAI_REASONING_ROUTING",
+        "OPENAI_REASONING_PACKAGING"
+      ],
+      "outputs": []
+    },
+    "@alana/web#build": {
+      "outputs": [".next/**"]
     },
     "dev": {
       "cache": false,

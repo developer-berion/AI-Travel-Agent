@@ -3,8 +3,8 @@ project_id = "alana-travel-quoting-os"
 [api]
 enabled = true
 port = 54321
-schemas = ["public"]
-extra_search_path = ["public"]
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
 [db]
@@ -16,5 +16,26 @@ major_version = 17
 enabled = true
 port = 54323
 
-[functions]
+[auth]
+enabled = true
+site_url = "https://alana-ai-agent.vercel.app"
+additional_redirect_urls = [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "https://alana-ai-agent.vercel.app",
+  "https://alana-ai-agent-victor-garcias-projects-380433e2.vercel.app",
+  "https://alana-ai-agent-git-main-victor-garcias-projects-380433e2.vercel.app",
+  "https://alana-ai-agent-git-staging-victor-garcias-projects-380433e2.vercel.app",
+]
+enable_signup = false
+enable_anonymous_sign_ins = false
+minimum_password_length = 10
+password_requirements = "lower_upper_letters_digits"
+
+[auth.email]
+enable_signup = true
+enable_confirmations = false
+secure_password_change = true
+
+[functions.quote-command]
 verify_jwt = false
