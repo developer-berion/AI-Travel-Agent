@@ -11,3 +11,4 @@ supabase/.temp
 tmp
 playwright-report
 test-results
+*.tsbuildinfo
