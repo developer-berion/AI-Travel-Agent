@@ -26,8 +26,13 @@ export const createRequestSupabaseClient = async () => {
             value: string;
           }>,
         ) {
-          for (const cookie of cookiesToSet) {
-            cookieStore.set(cookie.name, cookie.value, cookie.options);
+          try {
+            for (const cookie of cookiesToSet) {
+              cookieStore.set(cookie.name, cookie.value, cookie.options);
+            }
+          } catch {
+            // Server Components can read auth cookies but cannot always mutate them.
+            // Route Handlers and middleware remain the place for refresh writes.
           }
         },
       },

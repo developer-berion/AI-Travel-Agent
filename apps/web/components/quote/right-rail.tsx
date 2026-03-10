@@ -1,4 +1,15 @@
 import type { QuoteRecord } from "@alana/database";
+import type { ServiceLine } from "@alana/domain";
+
+const getServiceLineReadinessNote = (
+  extractedFields: Record<string, unknown>,
+  serviceLine: ServiceLine,
+) => {
+  const candidate = extractedFields[`${serviceLine}ReadinessNote`];
+  return typeof candidate === "string" && candidate.trim().length > 0
+    ? candidate.trim()
+    : null;
+};
 
 export const RightRail = ({
   record,
@@ -6,6 +17,15 @@ export const RightRail = ({
   record: QuoteRecord;
 }) => {
   const blockers = record.intake?.missingFields ?? [];
+  const serviceReadiness =
+    record.intake?.requestedServiceLines.map((serviceLine) => ({
+      note: getServiceLineReadinessNote(
+        record.intake?.extractedFields ?? {},
+        serviceLine,
+      ),
+      serviceLine,
+      state: record.intake?.readinessByServiceLine[serviceLine] ?? "blocked",
+    })) ?? [];
 
   return (
     <aside className="right-rail">
@@ -39,15 +59,29 @@ export const RightRail = ({
 
       <section className="rail-card">
         <p className="eyebrow">Readiness</p>
-        {blockers.length === 0 ? (
-          <p className="success-text">No active blockers in the mock slice.</p>
-        ) : (
+        {serviceReadiness.length > 0 ? (
+          <ul className="card-list">
+            {serviceReadiness.map((item) => (
+              <li key={item.serviceLine}>
+                <strong>
+                  {item.serviceLine}: {item.state}
+                </strong>
+                {item.note ? <p className="muted">{item.note}</p> : null}
+              </li>
+            ))}
+          </ul>
+        ) : blockers.length === 0 ? (
+          <p className="success-text">
+            No active blockers in the current slice.
+          </p>
+        ) : null}
+        {blockers.length > 0 ? (
           <ul className="card-list">
             {blockers.map((blocker) => (
               <li key={blocker}>{blocker}</li>
             ))}
           </ul>
-        )}
+        ) : null}
         {record.session.pendingQuestion ? (
           <p className="muted">{record.session.pendingQuestion}</p>
         ) : null}

@@ -33,6 +33,7 @@ Engineering OS para el quoting workspace de Alana. Este repo es la baseline de i
 - `AUTH_MODE=mock|supabase`
 - `QUOTE_REPOSITORY_MODE=mock|supabase`
 - `AI_PROVIDER=mock|openai`
+- `HOTELBEDS_PROVIDER=mock|hotelbeds`
 
 Defaults locales:
 
@@ -55,6 +56,9 @@ Variables importantes:
 - `OPENAI_REASONING_INTAKE=minimal`
 - `OPENAI_REASONING_ROUTING=low`
 - `OPENAI_REASONING_PACKAGING=medium`
+- `HOTELBEDS_BASE_URL` default `https://api.test.hotelbeds.com`
+- `HOTELBEDS_DEFAULT_LANGUAGE` default `en`
+- `HOTELBEDS_HOTELS_*`, `HOTELBEDS_ACTIVITIES_*` y `HOTELBEDS_TRANSFERS_*` separan credenciales por suite
 
 ## Quickstart
 
@@ -80,6 +84,8 @@ pnpm typecheck
 pnpm test
 pnpm build
 pnpm test:e2e
+pnpm hotelbeds:verify
+pnpm staging:hotelbeds:smoke
 ```
 
 ## Calidad y CI
@@ -93,6 +99,25 @@ El pipeline base corre en `GitHub Actions` sobre Linux y valida:
 - Playwright smoke E2E
 
 `Vercel Hobby` y `Supabase Free` se aceptan solo hasta piloto interno. Antes de piloto real se eleva el gate minimo a `Vercel Pro` y Supabase con backups/PITR.
+
+## Hotelbeds staging baseline
+
+Metodos fijados desde documentacion oficial:
+
+- `Hotels Booking API`: `POST /hotel-api/1.0/hotels` para disponibilidad real; `POST /hotel-api/1.0/checkrates` solo cuando el proveedor obliga a revalidar.
+- `Activities Booking API`: `POST /activity-api/3.0/activities` para search/availability.
+- `Transfers Booking API`: `GET /transfer-api/1.0/availability/...` para disponibilidad simple; `availability-multi` queda para itinerarios o rutas multiples.
+- `Content API` y `Cache API` no son la verdad transaccional del quote; se reservan para enrichment y mapping.
+
+Estado actual:
+
+- El paquete `@alana/hotelbeds` ya soporta firma `Api-key + X-Signature`, config por suite y adapter real cuando el intake trae anchors supplier-ready.
+- El intake ahora conserva contexto entre aclaraciones y resuelve un baseline curado de anchors supplier-ready para destinos soportados.
+- Hotel y actividades ya pueden mapear destinos conocidos (`Barcelona`, `Madrid`, `Paris`, `Rome`, `Cancun`, `Miami`, `London`, `Majorca`) cuando `HOTELBEDS_PROVIDER=hotelbeds`.
+- Transfers ya no intenta buscar a ciegas: solo se habilita con pickup/dropoff exactos; si falta un extremo, la cotizacion queda parcial y vuelve a `clarifying`.
+- El runtime hosted ya opera en `HOTELBEDS_PROVIDER=hotelbeds` para los casos supplier-ready soportados.
+- `pnpm hotelbeds:verify` valida credenciales y conectividad real de sandbox por suite sin persistir secretos en el repo.
+- `pnpm staging:hotelbeds:smoke` ejecuta un smoke hosted contra `https://alana-ai-agent.vercel.app` usando un usuario temporal de `Supabase Auth`.
 
 ## Staging hosted
 
@@ -108,13 +133,27 @@ Lo que ya quedo activo:
 - `AUTH_MODE=supabase` en hosted
 - `QUOTE_REPOSITORY_MODE=supabase` en hosted
 - `AI_PROVIDER=openai` en hosted
+- `HOTELBEDS_PROVIDER=hotelbeds` en hosted desde `2026-03-10`
+- repo GitHub ahora `public`
+- `main` protegida con `PR` + checks `lint`, `typecheck`, `test`, `build`, `test:e2e`
 - `Supabase Auth` en modo `invite-only`
 - `site_url` y redirects de auth alineados al staging actual
 - primer admin invitado a `victor@alanatours.com`
 - deploy manual exitoso del workbench actual a `https://alana-ai-agent.vercel.app`
 - validacion real de `OpenAI Responses API` con `gpt-5-mini`, dejando `openai_response_id` persistido en `audit_events`
+- validacion real de credenciales `Hotelbeds test` en `hotels`, `activities` y `transfers` usando requests oficiales de sandbox
+- smoke hosted supplier-backed exitoso para:
+  - `hotel_only`
+  - `activity_only`
+  - `transfer_only`
+  - `partial_transfer_blocked`
 
-Bloqueos externos vigentes:
+Notas operativas vigentes:
 
-- `GitHub branch protection` para repo privado no pudo activarse con el plan actual y devuelve `403 Upgrade to GitHub Pro or make this repository public`
-- `Vercel Git integration` no pudo reemplazar el repo anterior por `developer-berion/AI-Travel-Agent` porque la integracion de GitHub de Vercel no tiene acceso al repo privado nuevo
+- GitHub queda publico por decision de plan gratuito.
+- `Vercel for Git` ya esta conectado al repo `developer-berion/AI-Travel-Agent`.
+- `Require Verified Commits` esta habilitado en Vercel; los commits locales sin firma verificada disparan el webhook Git pero el preview queda cancelado antes de build.
+- El camino verificado para release sigue siendo:
+  - preview por PR/branch con commits verificados
+  - merge a `main` via PR
+  - `manual deploy + smoke` como fallback operativo si la firma verificada no esta disponible desde el entorno local

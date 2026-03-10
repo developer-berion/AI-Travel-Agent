@@ -9,6 +9,8 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "test:e2e": "pnpm --filter @alana/web test:e2e",
+    "hotelbeds:verify": "node scripts/verify-hotelbeds-connectivity.mjs",
+    "staging:hotelbeds:smoke": "node scripts/run-staging-hotelbeds-smoke.mjs",
     "typecheck": "turbo run typecheck",
     "format": "biome check --write .",
     "check": "pnpm lint && pnpm typecheck && pnpm test"

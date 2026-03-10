@@ -7,10 +7,14 @@ import {
 import {
   type QuoteCommandEnvelope,
   type QuoteCommandResult,
+  type ServiceLine,
   assertCommandAllowed,
 } from "@alana/domain";
 import type { HotelbedsSearchAdapter } from "@alana/hotelbeds";
-import { createMockHotelbedsAdapter } from "@alana/hotelbeds";
+import {
+  createMockHotelbedsAdapter,
+  enrichStructuredIntakeWithHotelbedsAnchors,
+} from "@alana/hotelbeds";
 import { createId, nowIso } from "@alana/shared";
 
 import {
@@ -44,6 +48,56 @@ const getPreviousOpenAiResponseId = (record: QuoteRecord) => {
   return typeof intakeAudit?.payload.openai_response_id === "string"
     ? intakeAudit.payload.openai_response_id
     : null;
+};
+
+const getServiceLineReadinessNote = (
+  extractionFields: Record<string, unknown>,
+  serviceLine: ServiceLine,
+) => {
+  const note = extractionFields[`${serviceLine}ReadinessNote`];
+  return typeof note === "string" && note.trim().length > 0
+    ? note.trim()
+    : null;
+};
+
+const getSupplierAnchorQuestion = (record: QuoteRecord) => {
+  const intake = record.intake;
+
+  if (!intake) {
+    return "Necesito una aclaracion breve antes de continuar.";
+  }
+
+  const blockedServiceLine = intake.requestedServiceLines.find(
+    (serviceLine) => intake.readinessByServiceLine[serviceLine] === "blocked",
+  );
+
+  if (!blockedServiceLine) {
+    return "Necesito una aclaracion breve antes de continuar.";
+  }
+
+  const readinessNote = getServiceLineReadinessNote(
+    intake.extractedFields,
+    blockedServiceLine,
+  );
+
+  if (blockedServiceLine === "transfer") {
+    return (
+      readinessNote ??
+      "Necesito pickup y dropoff exactos para el transfer antes de consultar Hotelbeds."
+    );
+  }
+
+  if (blockedServiceLine === "hotel") {
+    return (
+      readinessNote ??
+      "Necesito un destino soportado para poder mapear la busqueda hotelera."
+    );
+  }
+
+  return (
+    readinessNote ??
+    "Necesito un destino soportado para poder mapear la busqueda de actividades."
+  );
 };
 
 export const createQuoteCommandRunner = (dependencies?: {
@@ -109,10 +163,13 @@ export const createQuoteCommandRunner = (dependencies?: {
 
       const extraction = await aiRuntime.extractStructuredIntake({
         content,
+        existingIntake: record.intake,
         previousResponseId,
         quoteSessionId: record.session.id,
       });
-      const intake = createStructuredIntake(record.session.id, extraction);
+      const intake = enrichStructuredIntakeWithHotelbedsAnchors(
+        createStructuredIntake(record.session.id, extraction),
+      );
       record.intake = intake;
       await pushAudit("intake_extracted", {
         blockers: intake.missingFields.length,
@@ -158,6 +215,50 @@ export const createQuoteCommandRunner = (dependencies?: {
         };
       }
 
+      const readyServiceLines = intake.requestedServiceLines.filter(
+        (serviceLine) => intake.readinessByServiceLine[serviceLine] === "ready",
+      );
+      const blockedServiceLines = intake.requestedServiceLines.filter(
+        (serviceLine) =>
+          intake.readinessByServiceLine[serviceLine] === "blocked",
+      );
+
+      if (readyServiceLines.length === 0) {
+        record.shortlists = [];
+        record.session = updateSessionMeta(record.session, {
+          latestContextSummary:
+            "Necesito anchors supplier-ready antes de ejecutar la cotizacion.",
+          pendingQuestion: getSupplierAnchorQuestion(record),
+          status: "clarifying",
+          tripLabel: `Trip to ${String(intake.extractedFields.destination)}`,
+          tripStartDate: String(
+            (intake.extractedFields.travelDates as string[])[0] ?? "",
+          ),
+        });
+        await repository.saveRecord(record);
+        await pushAudit("readiness_validated", {
+          blockerCount: blockedServiceLines.length,
+          ready: false,
+        });
+        await pushAudit("fallback_triggered", {
+          blockedServices: blockedServiceLines.join(","),
+          reason: "supplier_anchor_resolution",
+        });
+
+        return {
+          auditEventIds,
+          commandId: envelope.commandId,
+          nextAction: "await_clarification_answer",
+          quoteSessionId: record.session.id,
+          sessionStateVersion: record.session.activeQuoteVersion,
+          viewModelDelta: {
+            blockers: blockedServiceLines,
+            contextPackage: buildContextPackage(record),
+            question: record.session.pendingQuestion,
+          },
+        };
+      }
+
       record.session = updateSessionMeta(record.session, {
         latestContextSummary: "Readiness valida. Ejecutando supplier searches.",
         pendingQuestion: null,
@@ -170,7 +271,7 @@ export const createQuoteCommandRunner = (dependencies?: {
       await pushAudit("readiness_validated", { blockerCount: 0, ready: true });
 
       const results = await Promise.all(
-        intake.requestedServiceLines.map((serviceLine) =>
+        readyServiceLines.map((serviceLine) =>
           hotelbedsAdapter.search(intake, serviceLine),
         ),
       );
@@ -188,21 +289,34 @@ export const createQuoteCommandRunner = (dependencies?: {
       const hasNoResults = results.some(
         (result) => result.error?.code === "no_results",
       );
+      const hasBlockedServices = blockedServiceLines.length > 0;
 
       record.session = updateSessionMeta(record.session, {
         activeQuoteVersion: record.session.activeQuoteVersion + 1,
-        latestContextSummary: hasWeakShortlist
-          ? "La cotizacion es parcial o debil y requiere caveats visibles."
-          : hasNoResults
-            ? "Una capa no devolvio resultados; se requiere fallback honesto."
-            : "La cotizacion ya tiene shortlist util para revision operator-facing.",
-        status: "reviewing",
+        latestContextSummary: hasBlockedServices
+          ? `La cotizacion es parcial; falta resolver ${blockedServiceLines.join(", ")} con anchors supplier-ready.`
+          : hasWeakShortlist
+            ? "La cotizacion es parcial o debil y requiere caveats visibles."
+            : hasNoResults
+              ? "Una capa no devolvio resultados; se requiere fallback honesto."
+              : "La cotizacion ya tiene shortlist util para revision operator-facing.",
+        pendingQuestion: hasBlockedServices
+          ? getSupplierAnchorQuestion(record)
+          : null,
+        status: hasBlockedServices ? "clarifying" : "reviewing",
       });
 
       await pushAudit("search_execution_completed", {
-        services: results.length,
+        services: readyServiceLines.length,
         weakShortlist: hasWeakShortlist,
       });
+      if (hasBlockedServices) {
+        await pushAudit("fallback_triggered", {
+          blockedServices: blockedServiceLines.join(","),
+          readyServices: readyServiceLines.join(","),
+          reason: "supplier_anchor_resolution",
+        });
+      }
       await pushAudit("shortlist_created", {
         shortlistCount: record.shortlists.length,
       });
@@ -213,9 +327,11 @@ export const createQuoteCommandRunner = (dependencies?: {
       await repository.appendMessage({
         quoteSessionId: record.session.id,
         role: "assistant",
-        content: hasWeakShortlist
-          ? "Encontre una salida util, pero una capa necesita caveats visibles o seguimiento."
-          : "Ya tengo una shortlist inicial y la deje lista para revision.",
+        content: hasBlockedServices
+          ? `Ya tengo opciones para ${readyServiceLines.join(", ")}, pero ${blockedServiceLines.join(", ")} sigue esperando anchors exactos.`
+          : hasWeakShortlist
+            ? "Encontre una salida util, pero una capa necesita caveats visibles o seguimiento."
+            : "Ya tengo una shortlist inicial y la deje lista para revision.",
       });
 
       await repository.saveRecord(record);
@@ -223,7 +339,9 @@ export const createQuoteCommandRunner = (dependencies?: {
       return {
         auditEventIds,
         commandId: envelope.commandId,
-        nextAction: "results_ready",
+        nextAction: hasBlockedServices
+          ? "await_clarification_answer"
+          : "results_ready",
         quoteSessionId: record.session.id,
         sessionStateVersion: record.session.activeQuoteVersion,
         viewModelDelta: {

@@ -31,6 +31,6 @@ Los proyectos hosted existentes fijados para esta etapa son:
 - Se valido en hosted la cadena `login -> create quote -> append operator message`, generando `operator_profiles`, `quote_sessions`, `quote_messages` y `audit_events` en staging.
 - Se valido `OpenAI Responses API` en staging con `gpt-5-mini`; el evento `intake_extracted` persiste `openai_response_id` en `audit_events`.
 - El primer admin de staging fue invitado a `victor@alanatours.com`.
-- `main` ya existe y el repo canonico esta sembrado y privado, pero el enforcement de `branch protection` sigue bloqueado por el plan actual de GitHub para repos privados.
-- `Vercel Git integration` sigue bloqueada hasta que la app de GitHub de Vercel tenga acceso al repo privado `developer-berion/AI-Travel-Agent`.
+- El repo canonico `developer-berion/AI-Travel-Agent` ahora es publico y `main` quedo protegida con PR obligatorio y checks requeridos.
+- `Vercel Git integration` no quedo conectada al repo canonico; el proyecto actual sigue sin Git repository asociado y se mantiene con deploy manual hasta resolver esa integracion en Vercel.
 - El siguiente slice tecnico ya no es `OpenAI staging activation`; es `Hotelbeds staging integration`.
