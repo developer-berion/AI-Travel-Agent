@@ -89,6 +89,31 @@ const requestJson = async ({ apiKey, body, method, path, secret }) => {
   };
 };
 
+const parseProbeError = (error) => {
+  if (!(error instanceof Error)) {
+    return {
+      message: "unknown_error",
+      statusCode: -1,
+    };
+  }
+
+  try {
+    const parsed = JSON.parse(error.message);
+
+    return {
+      message: parsed?.payload?.message ?? error.message,
+      payload: parsed?.payload ?? null,
+      statusCode:
+        typeof parsed?.statusCode === "number" ? parsed.statusCode : -1,
+    };
+  } catch {
+    return {
+      message: error.message,
+      statusCode: -1,
+    };
+  }
+};
+
 const probes = [
   {
     apiKey: process.env.HOTELBEDS_HOTELS_API_KEY,
@@ -174,10 +199,10 @@ for (const probe of probes) {
       suite: probe.suite,
     });
   } catch (error) {
-    const parsedError =
-      error instanceof Error ? JSON.parse(error.message) : { statusCode: -1 };
+    const parsedError = parseProbeError(error);
 
     results.push({
+      message: parsedError.message,
       ok: false,
       path: probe.path,
       sampleCount: 0,

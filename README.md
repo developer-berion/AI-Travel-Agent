@@ -84,6 +84,8 @@ pnpm typecheck
 pnpm test
 pnpm build
 pnpm test:e2e
+pnpm hotelbeds:verify
+pnpm staging:hotelbeds:smoke
 ```
 
 ## Calidad y CI
@@ -113,8 +115,9 @@ Estado actual:
 - El intake ahora conserva contexto entre aclaraciones y resuelve un baseline curado de anchors supplier-ready para destinos soportados.
 - Hotel y actividades ya pueden mapear destinos conocidos (`Barcelona`, `Madrid`, `Paris`, `Rome`, `Cancun`, `Miami`, `London`, `Majorca`) cuando `HOTELBEDS_PROVIDER=hotelbeds`.
 - Transfers ya no intenta buscar a ciegas: solo se habilita con pickup/dropoff exactos; si falta un extremo, la cotizacion queda parcial y vuelve a `clarifying`.
-- El runtime hosted sigue en `HOTELBEDS_PROVIDER=mock` hasta validar el workbench real con un operador sobre esta wave de anchors.
-- Hay verificacion manual lista en `pnpm hotelbeds:verify` para probar credenciales de sandbox sin persistir secretos en el repo.
+- El runtime hosted ya opera en `HOTELBEDS_PROVIDER=hotelbeds` para los casos supplier-ready soportados.
+- `pnpm hotelbeds:verify` valida credenciales y conectividad real de sandbox por suite sin persistir secretos en el repo.
+- `pnpm staging:hotelbeds:smoke` ejecuta un smoke hosted contra `https://alana-ai-agent.vercel.app` usando un usuario temporal de `Supabase Auth`.
 
 ## Staging hosted
 
@@ -130,6 +133,7 @@ Lo que ya quedo activo:
 - `AUTH_MODE=supabase` en hosted
 - `QUOTE_REPOSITORY_MODE=supabase` en hosted
 - `AI_PROVIDER=openai` en hosted
+- `HOTELBEDS_PROVIDER=hotelbeds` en hosted desde `2026-03-10`
 - repo GitHub ahora `public`
 - `main` protegida con `PR` + checks `lint`, `typecheck`, `test`, `build`, `test:e2e`
 - `Supabase Auth` en modo `invite-only`
@@ -138,7 +142,13 @@ Lo que ya quedo activo:
 - deploy manual exitoso del workbench actual a `https://alana-ai-agent.vercel.app`
 - validacion real de `OpenAI Responses API` con `gpt-5-mini`, dejando `openai_response_id` persistido en `audit_events`
 - validacion real de credenciales `Hotelbeds test` en `hotels`, `activities` y `transfers` usando requests oficiales de sandbox
+- smoke hosted supplier-backed exitoso para:
+  - `hotel_only`
+  - `activity_only`
+  - `transfer_only`
+  - `partial_transfer_blocked`
 
-Bloqueos externos vigentes:
+Notas operativas vigentes:
 
-- `Vercel Git integration` sigue sin conectar el proyecto `alana-ai-agent` al repo `developer-berion/AI-Travel-Agent`; el proyecto hoy funciona con deploy manual y el CLI reporta que no hay Git repository conectado
+- GitHub queda publico por decision de plan gratuito.
+- El camino de despliegue verificado para esta wave sigue siendo `manual deploy + smoke`.
