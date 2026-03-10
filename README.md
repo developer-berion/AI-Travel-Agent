@@ -107,13 +107,14 @@ Lo que ya quedo activo:
 
 - `AUTH_MODE=supabase` en hosted
 - `QUOTE_REPOSITORY_MODE=supabase` en hosted
+- `AI_PROVIDER=openai` en hosted
 - `Supabase Auth` en modo `invite-only`
 - `site_url` y redirects de auth alineados al staging actual
 - primer admin invitado a `victor@alanatours.com`
 - deploy manual exitoso del workbench actual a `https://alana-ai-agent.vercel.app`
+- validacion real de `OpenAI Responses API` con `gpt-5-mini`, dejando `openai_response_id` persistido en `audit_events`
 
 Bloqueos externos vigentes:
 
 - `GitHub branch protection` para repo privado no pudo activarse con el plan actual y devuelve `403 Upgrade to GitHub Pro or make this repository public`
 - `Vercel Git integration` no pudo reemplazar el repo anterior por `developer-berion/AI-Travel-Agent` porque la integracion de GitHub de Vercel no tiene acceso al repo privado nuevo
-- `AI_PROVIDER=openai` no se activo en hosted porque falta `OPENAI_API_KEY`

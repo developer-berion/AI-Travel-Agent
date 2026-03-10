@@ -22,14 +22,15 @@ Los proyectos hosted existentes fijados para esta etapa son:
 - `Supabase Auth` se configura en modo `invite-only`: signup publico bloqueado, email/password login habilitado para usuarios provisionados y redirects alineados al URL canonico actual `https://alana-ai-agent.vercel.app`.
 - `Vercel` queda configurado con `rootDirectory=apps/web`, `framework=nextjs` y `nodeVersion=22.x`.
 - El proyecto hosted actual se trata como `staging canonical URL` mientras no exista un proyecto separado de produccion.
-- Los envs de hosted quedan activados para `supabase` y preparados para `openai`, pero `AI_PROVIDER=openai` no se habilita hasta recibir `OPENAI_API_KEY`.
+- Los envs de hosted quedan activados para `supabase` y `openai` en el target `production` del proyecto Vercel actual, que en esta etapa funciona como staging canonico.
 - El deploy de staging se valida con deployment manual `sourceless` porque el deploy directo desde el repo local quedo bloqueado por metadata Git del autor y la integracion Git aun apunta al repo historico.
 
 ## Consecuencias
 
 - El staging actual ya soporta login real con `Supabase Auth`, persistencia real en `Postgres` y ownership por operador.
 - Se valido en hosted la cadena `login -> create quote -> append operator message`, generando `operator_profiles`, `quote_sessions`, `quote_messages` y `audit_events` en staging.
+- Se valido `OpenAI Responses API` en staging con `gpt-5-mini`; el evento `intake_extracted` persiste `openai_response_id` en `audit_events`.
 - El primer admin de staging fue invitado a `victor@alanatours.com`.
 - `main` ya existe y el repo canonico esta sembrado y privado, pero el enforcement de `branch protection` sigue bloqueado por el plan actual de GitHub para repos privados.
 - `Vercel Git integration` sigue bloqueada hasta que la app de GitHub de Vercel tenga acceso al repo privado `developer-berion/AI-Travel-Agent`.
-- El siguiente slice tecnico no es mas foundation; es `OpenAI staging activation` y despues `Hotelbeds staging integration`.
+- El siguiente slice tecnico ya no es `OpenAI staging activation`; es `Hotelbeds staging integration`.
