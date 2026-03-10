@@ -110,7 +110,10 @@ Metodos fijados desde documentacion oficial:
 Estado actual:
 
 - El paquete `@alana/hotelbeds` ya soporta firma `Api-key + X-Signature`, config por suite y adapter real cuando el intake trae anchors supplier-ready.
-- El runtime sigue en `HOTELBEDS_PROVIDER=mock` por defecto hasta cerrar la wave de mapping `destination/from/to`.
+- El intake ahora conserva contexto entre aclaraciones y resuelve un baseline curado de anchors supplier-ready para destinos soportados.
+- Hotel y actividades ya pueden mapear destinos conocidos (`Barcelona`, `Madrid`, `Paris`, `Rome`, `Cancun`, `Miami`, `London`, `Majorca`) cuando `HOTELBEDS_PROVIDER=hotelbeds`.
+- Transfers ya no intenta buscar a ciegas: solo se habilita con pickup/dropoff exactos; si falta un extremo, la cotizacion queda parcial y vuelve a `clarifying`.
+- El runtime hosted sigue en `HOTELBEDS_PROVIDER=mock` hasta validar el workbench real con un operador sobre esta wave de anchors.
 - Hay verificacion manual lista en `pnpm hotelbeds:verify` para probar credenciales de sandbox sin persistir secretos en el repo.
 
 ## Staging hosted

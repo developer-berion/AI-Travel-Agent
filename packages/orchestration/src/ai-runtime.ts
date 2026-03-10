@@ -1,6 +1,7 @@
 import type {
   BlockingField,
   ServiceLine,
+  ServiceLineReadiness,
   StructuredIntake,
 } from "@alana/domain";
 import { createId, nowIso } from "@alana/shared";
@@ -8,13 +9,38 @@ import OpenAI from "openai";
 import type { ReasoningEffort } from "openai/resources/shared";
 
 const knownDestinations = [
-  "paris",
-  "madrid",
-  "roma",
-  "barcelona",
-  "cancun",
-  "miami",
-  "london",
+  {
+    canonical: "paris",
+    aliases: ["paris"],
+  },
+  {
+    canonical: "madrid",
+    aliases: ["madrid"],
+  },
+  {
+    canonical: "rome",
+    aliases: ["rome", "roma"],
+  },
+  {
+    canonical: "barcelona",
+    aliases: ["barcelona"],
+  },
+  {
+    canonical: "cancun",
+    aliases: ["cancun", "cancun mexico"],
+  },
+  {
+    canonical: "miami",
+    aliases: ["miami"],
+  },
+  {
+    canonical: "london",
+    aliases: ["london", "londres"],
+  },
+  {
+    canonical: "majorca",
+    aliases: ["majorca", "mallorca", "palma", "palma de mallorca"],
+  },
 ] as const;
 
 type IntakeExtractionResult = {
@@ -22,16 +48,17 @@ type IntakeExtractionResult = {
   extractedFields: StructuredIntake["extractedFields"];
   missingFields: BlockingField[];
   previousResponseId: string | null;
-  readinessByServiceLine: StructuredIntake["readinessByServiceLine"];
+  readinessByServiceLine: Partial<Record<ServiceLine, ServiceLineReadiness>>;
   requestedServiceLines: ServiceLine[];
 };
 
 type OpenAiIntakePayload = {
   adults: number;
-  childAgesConfirmed: boolean;
+  childAges: number[];
   children: number;
   contradictions: string[];
   destination: string;
+  infants: number;
   requestedServiceLines: ServiceLine[];
   travelDates: string[];
 };
@@ -39,6 +66,7 @@ type OpenAiIntakePayload = {
 export type QuoteAiRuntime = {
   extractStructuredIntake(input: {
     content: string;
+    existingIntake?: StructuredIntake | null;
     previousResponseId?: string | null;
     quoteSessionId: string;
   }): Promise<IntakeExtractionResult>;
@@ -84,7 +112,11 @@ const intakeJsonSchema = {
     },
     adults: { minimum: 0, type: "integer" },
     children: { minimum: 0, type: "integer" },
-    childAgesConfirmed: { type: "boolean" },
+    childAges: {
+      items: { minimum: 0, type: "integer" },
+      type: "array",
+    },
+    infants: { minimum: 0, type: "integer" },
     contradictions: {
       items: { type: "string" },
       type: "array",
@@ -96,7 +128,8 @@ const intakeJsonSchema = {
     "travelDates",
     "adults",
     "children",
-    "childAgesConfirmed",
+    "childAges",
+    "infants",
     "contradictions",
   ],
   type: "object",
@@ -104,7 +137,7 @@ const intakeJsonSchema = {
 
 const buildMissingFields = (input: {
   adults: number;
-  childAgesConfirmed: boolean;
+  childAges: Array<number | string>;
   children: number;
   destination: string;
   requestedServiceLines: ServiceLine[];
@@ -128,39 +161,115 @@ const buildMissingFields = (input: {
     missingFields.push("service_scope");
   }
 
-  if (input.children > 0 && !input.childAgesConfirmed) {
+  if (input.children > 0 && input.childAges.length !== input.children) {
     missingFields.push("child_ages");
   }
 
   return missingFields;
 };
 
+const getStringField = (value: unknown) =>
+  typeof value === "string" && value.trim().length > 0 ? value.trim() : "";
+
+const getStringArrayField = (value: unknown) =>
+  Array.isArray(value)
+    ? value
+        .map((item) => (typeof item === "string" ? item.trim() : ""))
+        .filter((item): item is string => item.length > 0)
+    : [];
+
+const getNumberField = (value: unknown) =>
+  typeof value === "number" && Number.isFinite(value) ? value : 0;
+
+const dedupeValues = <T>(values: T[]) => [...new Set(values)];
+
+const shouldOverrideNumericField = (content: string, patterns: RegExp[]) =>
+  patterns.some((pattern) => pattern.test(content));
+
 const buildIntakeResult = (
   quoteSessionId: string,
   payload: OpenAiIntakePayload,
   raw: string,
   previousResponseId: string | null,
+  existingIntake?: StructuredIntake | null,
 ): IntakeExtractionResult => {
-  const missingFields = buildMissingFields(payload);
+  const existingFields = existingIntake?.extractedFields ?? {};
+  const existingDestination = getStringField(existingFields.destination);
+  const existingTravelDates = getStringArrayField(existingFields.travelDates);
+  const existingChildAges = getStringArrayField(existingFields.childAges);
+  const existingAdults = getNumberField(existingFields.adults);
+  const existingChildren = getNumberField(existingFields.children);
+  const existingInfants = getNumberField(existingFields.infants);
+  const requestedServiceLines = dedupeValues([
+    ...(existingIntake?.requestedServiceLines ?? []),
+    ...payload.requestedServiceLines,
+  ]);
+  const nextChildAges = payload.childAges
+    .filter((age) => Number.isFinite(age) && age >= 0)
+    .map((age) => `${Math.trunc(age)}`);
+  const mergedRaw = [getStringField(existingFields.raw), raw]
+    .filter((value) => value.length > 0)
+    .join("\n");
+  const adults = shouldOverrideNumericField(raw, [
+    /adult|adults|adulto|adultos|pax/i,
+  ])
+    ? payload.adults
+    : payload.adults > 0
+      ? payload.adults
+      : existingAdults;
+  const children = shouldOverrideNumericField(raw, [
+    /child|children|nino|ninos|kids/i,
+  ])
+    ? payload.children
+    : payload.children > 0
+      ? payload.children
+      : existingChildren;
+  const infants = shouldOverrideNumericField(raw, [
+    /infant|infants|bebe|bebes|baby|babies/i,
+  ])
+    ? payload.infants
+    : payload.infants > 0
+      ? payload.infants
+      : existingInfants;
+  const destination = payload.destination.trim() || existingDestination;
+  const travelDates =
+    payload.travelDates.length > 0 ? payload.travelDates : existingTravelDates;
+  const childAges =
+    nextChildAges.length > 0 ? nextChildAges : existingChildAges;
+  const normalizedMissingFields = buildMissingFields({
+    adults,
+    childAges,
+    children,
+    destination,
+    requestedServiceLines,
+    travelDates,
+  });
 
   return {
-    contradictions: payload.contradictions,
+    contradictions: dedupeValues([
+      ...(existingIntake?.contradictions ?? []),
+      ...payload.contradictions,
+    ]),
     extractedFields: {
-      adults: payload.adults,
-      children: payload.children,
-      destination: payload.destination,
-      raw,
-      travelDates: payload.travelDates,
+      ...existingFields,
+      adults,
+      childAges,
+      children,
+      destination,
+      infants,
+      raw: mergedRaw,
+      travelDates,
     },
-    missingFields,
+    missingFields: normalizedMissingFields,
     previousResponseId,
-    readinessByServiceLine: payload.requestedServiceLines.reduce<
-      Partial<Record<ServiceLine, "blocked" | "ready" | "partial">>
+    readinessByServiceLine: requestedServiceLines.reduce<
+      Partial<Record<ServiceLine, ServiceLineReadiness>>
     >((accumulator, serviceLine) => {
-      accumulator[serviceLine] = missingFields.length > 0 ? "blocked" : "ready";
+      accumulator[serviceLine] =
+        normalizedMissingFields.length > 0 ? "blocked" : "ready";
       return accumulator;
     }, {}),
-    requestedServiceLines: payload.requestedServiceLines,
+    requestedServiceLines,
   };
 };
 
@@ -190,8 +299,8 @@ const parseServiceLines = (content: string): ServiceLine[] => {
 
 const extractDestination = (content: string) =>
   knownDestinations.find((destination) =>
-    content.toLowerCase().includes(destination),
-  );
+    destination.aliases.some((alias) => content.toLowerCase().includes(alias)),
+  )?.canonical ?? "";
 
 const extractDates = (content: string) =>
   [...content.matchAll(/\b\d{4}-\d{2}-\d{2}\b/g)].map((match) => match[0]);
@@ -204,6 +313,31 @@ const extractAdults = (content: string) => {
 const extractChildren = (content: string) => {
   const match = content.match(/(\d+)\s*(child|children|nino|ninos|kids)/i);
   return match ? Number(match[1]) : 0;
+};
+
+const extractInfants = (content: string) => {
+  const match = content.match(
+    /(\d+)\s*(infant|infants|bebe|bebes|baby|babies)/i,
+  );
+  return match ? Number(match[1]) : 0;
+};
+
+const extractChildAges = (content: string) => {
+  const ageBlock =
+    content.match(
+      /(?:child(?:ren)?|kids?|nino|ninos)?\s*ages?\s*[:\-]?\s*([0-9,\sand]+)/i,
+    ) ??
+    content.match(/edades?\s*(?:de\s*los\s*ninos)?\s*[:\-]?\s*([0-9,\sy]+)/i);
+
+  if (ageBlock?.[1]) {
+    return [...ageBlock[1].matchAll(/\b\d{1,2}\b/g)].map((match) =>
+      Number(match[0]),
+    );
+  }
+
+  return [
+    ...content.matchAll(/\b(\d{1,2})\s*(?:yo|yrs?|years?\s*old)\b/gi),
+  ].map((match) => Number(match[1]));
 };
 
 export const createStructuredIntake = (
@@ -242,13 +376,16 @@ export const getClarificationQuestion = (intake: StructuredIntake) => {
 export const createMockAiRuntime = (): QuoteAiRuntime => ({
   async extractStructuredIntake({
     content,
+    existingIntake,
     quoteSessionId,
     previousResponseId,
   }) {
-    const destination = extractDestination(content) ?? "";
+    const destination = extractDestination(content);
     const travelDates = extractDates(content);
     const adults = extractAdults(content);
     const children = extractChildren(content);
+    const childAges = extractChildAges(content);
+    const infants = extractInfants(content);
     const requestedServiceLines = parseServiceLines(content);
     const contradictions: string[] = [];
 
@@ -262,16 +399,17 @@ export const createMockAiRuntime = (): QuoteAiRuntime => ({
       quoteSessionId,
       {
         adults,
-        childAgesConfirmed:
-          children === 0 || /age|ages|edad|edades/i.test(content),
+        childAges,
         children,
         contradictions,
         destination,
+        infants,
         requestedServiceLines,
         travelDates,
       },
       content,
       previousResponseId ?? null,
+      existingIntake,
     );
   },
 });
@@ -288,6 +426,7 @@ export const createOpenAiResponsesRuntime = (input: {
   const runtime: QuoteAiRuntime = {
     async extractStructuredIntake({
       content,
+      existingIntake,
       previousResponseId,
       quoteSessionId,
     }) {
@@ -295,7 +434,7 @@ export const createOpenAiResponsesRuntime = (input: {
         input: [
           {
             content:
-              "Extract the travel quoting intake into the requested JSON schema. Do not invent destinations, dates, service lines, pax counts, or child age confirmation.",
+              "Extract the travel quoting intake into the requested JSON schema. Do not invent destinations, dates, service lines, pax counts, child ages, or infants.",
             role: "developer",
           },
           {
@@ -329,7 +468,13 @@ export const createOpenAiResponsesRuntime = (input: {
 
       const parsed = JSON.parse(response.output_text) as OpenAiIntakePayload;
 
-      return buildIntakeResult(quoteSessionId, parsed, content, response.id);
+      return buildIntakeResult(
+        quoteSessionId,
+        parsed,
+        content,
+        response.id,
+        existingIntake,
+      );
     },
   };
 

@@ -30,7 +30,7 @@ describe("orchestration", () => {
       createdAt: nowIso(),
       payload: {
         content:
-          "Need hotel and transfer in Madrid from 2026-05-01 to 2026-05-05 for 2 adults",
+          "Need hotel in Madrid from 2026-05-01 to 2026-05-05 for 2 adults",
       },
     });
 

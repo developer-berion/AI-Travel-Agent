@@ -22,6 +22,11 @@ export const commercialStatusValues = [
 ] as const;
 
 export const serviceLineValues = ["hotel", "transfer", "activity"] as const;
+export const serviceLineReadinessValues = [
+  "blocked",
+  "ready",
+  "partial",
+] as const;
 export const recommendationModeValues = [
   "best_match",
   "three_options",
@@ -48,6 +53,7 @@ export const quoteCommandNames = [
 export type QuoteSessionState = (typeof quoteSessionStateValues)[number];
 export type CommercialStatus = (typeof commercialStatusValues)[number];
 export type ServiceLine = (typeof serviceLineValues)[number];
+export type ServiceLineReadiness = (typeof serviceLineReadinessValues)[number];
 export type RecommendationMode = (typeof recommendationModeValues)[number];
 export type QuoteCommandName = (typeof quoteCommandNames)[number];
 
@@ -99,9 +105,7 @@ export type StructuredIntake = {
   extractedFields: Record<string, string | number | boolean | string[]>;
   missingFields: BlockingField[];
   contradictions: string[];
-  readinessByServiceLine: Partial<
-    Record<ServiceLine, "blocked" | "ready" | "partial">
-  >;
+  readinessByServiceLine: Partial<Record<ServiceLine, ServiceLineReadiness>>;
   createdAt: string;
 };
 
