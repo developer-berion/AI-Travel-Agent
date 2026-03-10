@@ -2,6 +2,7 @@ import { z } from "@alana/shared";
 
 const executionModeSchema = z.enum(["mock", "supabase"]);
 const aiProviderSchema = z.enum(["mock", "openai"]);
+const hotelbedsProviderSchema = z.enum(["mock", "hotelbeds"]);
 const reasoningEffortSchema = z.enum([
   "none",
   "minimal",
@@ -27,9 +28,31 @@ const runtimeConfigSchema = z.object({
   OPENAI_REASONING_INTAKE: reasoningEffortSchema.default("minimal"),
   OPENAI_REASONING_ROUTING: reasoningEffortSchema.default("low"),
   OPENAI_REASONING_PACKAGING: reasoningEffortSchema.default("medium"),
+  HOTELBEDS_PROVIDER: hotelbedsProviderSchema.default("mock"),
+  HOTELBEDS_BASE_URL: z
+    .string()
+    .url()
+    .default("https://api.test.hotelbeds.com"),
+  HOTELBEDS_DEFAULT_LANGUAGE: z.string().min(2).default("en"),
+  HOTELBEDS_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
+  HOTELBEDS_HOTELS_API_KEY: z.string().min(1).optional(),
+  HOTELBEDS_HOTELS_SECRET: z.string().min(1).optional(),
+  HOTELBEDS_ACTIVITIES_API_KEY: z.string().min(1).optional(),
+  HOTELBEDS_ACTIVITIES_SECRET: z.string().min(1).optional(),
+  HOTELBEDS_TRANSFERS_API_KEY: z.string().min(1).optional(),
+  HOTELBEDS_TRANSFERS_SECRET: z.string().min(1).optional(),
 });
 
 export type RuntimeConfig = z.infer<typeof runtimeConfigSchema>;
+export type HotelbedsEnabledRuntimeConfig = RuntimeConfig & {
+  HOTELBEDS_ACTIVITIES_API_KEY: string;
+  HOTELBEDS_ACTIVITIES_SECRET: string;
+  HOTELBEDS_HOTELS_API_KEY: string;
+  HOTELBEDS_HOTELS_SECRET: string;
+  HOTELBEDS_PROVIDER: "hotelbeds";
+  HOTELBEDS_TRANSFERS_API_KEY: string;
+  HOTELBEDS_TRANSFERS_SECRET: string;
+};
 
 let cachedConfig: RuntimeConfig | null = null;
 
@@ -87,4 +110,25 @@ export const assertOpenAiEnabled = () => {
   }
 
   return config;
+};
+
+export const assertHotelbedsEnabled = () => {
+  const config = getRuntimeConfig();
+
+  if (config.HOTELBEDS_PROVIDER !== "hotelbeds") {
+    throw new Error("hotelbeds_mode_not_enabled");
+  }
+
+  if (
+    !config.HOTELBEDS_HOTELS_API_KEY ||
+    !config.HOTELBEDS_HOTELS_SECRET ||
+    !config.HOTELBEDS_ACTIVITIES_API_KEY ||
+    !config.HOTELBEDS_ACTIVITIES_SECRET ||
+    !config.HOTELBEDS_TRANSFERS_API_KEY ||
+    !config.HOTELBEDS_TRANSFERS_SECRET
+  ) {
+    throw new Error("hotelbeds_env_missing");
+  }
+
+  return config as HotelbedsEnabledRuntimeConfig;
 };
