@@ -86,6 +86,7 @@ pnpm build
 pnpm test:e2e
 pnpm hotelbeds:verify
 pnpm staging:hotelbeds:smoke
+pnpm staging:bundle:smoke
 ```
 
 ## Calidad y CI
@@ -113,8 +114,12 @@ Estado actual:
 
 - El paquete `@alana/hotelbeds` ya soporta firma `Api-key + X-Signature`, config por suite y adapter real cuando el intake trae anchors supplier-ready.
 - El intake ahora conserva contexto entre aclaraciones y resuelve un baseline curado de anchors supplier-ready para destinos soportados.
+- `ai-runtime` y `anchor-resolution` comparten el mismo registry de destinos soportados para evitar drift entre extraccion y supplier readiness.
+- La seleccion operator-facing del quote ya se persiste como snapshot supplier-backed en `selected_quote_items`, sin acoplar la UI a payloads raw del proveedor.
+- `select_option_for_cart`, `remove_cart_item` y `refresh_bundle_review` ya actualizan `bundleReview`, version activa y readiness de export dentro del command layer.
 - Hotel y actividades ya pueden mapear destinos conocidos (`Barcelona`, `Madrid`, `Paris`, `Rome`, `Cancun`, `Miami`, `London`, `Majorca`) cuando `HOTELBEDS_PROVIDER=hotelbeds`.
 - Transfers ya no intenta buscar a ciegas: solo se habilita con pickup/dropoff exactos; si falta un extremo, la cotizacion queda parcial y vuelve a `clarifying`.
+- Transfers tambien puede reutilizar anchors ya estructurados (`transferFrom*`, `transferTo*`, `transferProperty*`) cuando el hilo ya conoce una propiedad exacta aunque el operador la mencione de forma generica como `the hotel`.
 - El runtime hosted ya opera en `HOTELBEDS_PROVIDER=hotelbeds` para los casos supplier-ready soportados.
 - `pnpm hotelbeds:verify` valida credenciales y conectividad real de sandbox por suite sin persistir secretos en el repo.
 - `pnpm staging:hotelbeds:smoke` ejecuta un smoke hosted contra `https://alana-ai-agent.vercel.app` usando un usuario temporal de `Supabase Auth`.
@@ -147,6 +152,13 @@ Lo que ya quedo activo:
   - `activity_only`
   - `transfer_only`
   - `partial_transfer_blocked`
+- smoke hosted exitoso para `bundle review`:
+  - `reviewing -> export_ready` via `select_option_for_cart`
+  - `export_ready -> reviewing` via `remove_cart_item`
+- nueva slice pendiente de rollout en DB remota:
+  - tabla `selected_quote_items`
+  - bundle review persistido desde `SupabaseQuoteRepository`
+  - seleccion de shortlist operator-facing antes de export
 
 Notas operativas vigentes:
 

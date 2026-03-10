@@ -96,6 +96,10 @@ const mapOptionRow = (
     row.supplier_metadata as NormalizedOption["supplierMetadata"],
 });
 
+const mapSelectedItemRow = (
+  row: Database["public"]["Tables"]["selected_quote_items"]["Row"],
+): NormalizedOption => row.option_snapshot as NormalizedOption;
+
 const mapIntakeRow = (
   row: Database["public"]["Tables"]["structured_intakes"]["Row"],
 ): StructuredIntake => ({
@@ -149,6 +153,16 @@ const mapOptionInsert = (
   caveat: option.caveat,
   availability_state: option.availabilityState,
   supplier_metadata: option.supplierMetadata as Json,
+});
+
+const mapSelectedItemInsert = (
+  quoteSessionId: string,
+  option: NormalizedOption,
+): Database["public"]["Tables"]["selected_quote_items"]["Insert"] => ({
+  option_snapshot: option as Json,
+  quote_session_id: quoteSessionId,
+  service_line: option.serviceLine,
+  updated_at: nowIso(),
 });
 
 const getShortlists = async (
@@ -208,25 +222,35 @@ const mapPersistedRecord = async (
   sessionRow: Database["public"]["Tables"]["quote_sessions"]["Row"],
 ) => {
   const session = mapSessionRow(sessionRow);
-  const [messagesResult, intakeResult, shortlists, auditResult] =
-    await Promise.all([
-      client
-        .from("quote_messages")
-        .select("*")
-        .eq("quote_session_id", session.id)
-        .order("created_at", { ascending: true }),
-      client
-        .from("structured_intakes")
-        .select("*")
-        .eq("quote_session_id", session.id)
-        .maybeSingle(),
-      getShortlists(client, session.id),
-      client
-        .from("audit_events")
-        .select("*")
-        .eq("quote_session_id", session.id)
-        .order("created_at", { ascending: true }),
-    ]);
+  const [
+    messagesResult,
+    intakeResult,
+    selectedItemsResult,
+    shortlists,
+    auditResult,
+  ] = await Promise.all([
+    client
+      .from("quote_messages")
+      .select("*")
+      .eq("quote_session_id", session.id)
+      .order("created_at", { ascending: true }),
+    client
+      .from("structured_intakes")
+      .select("*")
+      .eq("quote_session_id", session.id)
+      .maybeSingle(),
+    client
+      .from("selected_quote_items")
+      .select("*")
+      .eq("quote_session_id", session.id)
+      .order("created_at", { ascending: true }),
+    getShortlists(client, session.id),
+    client
+      .from("audit_events")
+      .select("*")
+      .eq("quote_session_id", session.id)
+      .order("created_at", { ascending: true }),
+  ]);
 
   if (messagesResult.error) {
     throw messagesResult.error;
@@ -240,11 +264,18 @@ const mapPersistedRecord = async (
     throw auditResult.error;
   }
 
+  if (selectedItemsResult.error) {
+    throw selectedItemsResult.error;
+  }
+
   const messageRows = messagesResult.data as
     | Database["public"]["Tables"]["quote_messages"]["Row"][]
     | null;
   const intakeRow = intakeResult.data as
     | Database["public"]["Tables"]["structured_intakes"]["Row"]
+    | null;
+  const selectedItemRows = selectedItemsResult.data as
+    | Database["public"]["Tables"]["selected_quote_items"]["Row"][]
     | null;
   const auditRows = auditResult.data as
     | Database["public"]["Tables"]["audit_events"]["Row"][]
@@ -254,6 +285,7 @@ const mapPersistedRecord = async (
     session,
     messages: (messageRows ?? []).map(mapMessageRow),
     intake: intakeRow ? mapIntakeRow(intakeRow) : null,
+    selectedItems: (selectedItemRows ?? []).map(mapSelectedItemRow),
     shortlists,
     auditEvents: (auditRows ?? []).map(mapAuditEventRow),
   } satisfies QuoteRecord;
@@ -295,6 +327,7 @@ export const createSupabaseQuoteRepository = (
       ),
       messages: [],
       intake: null,
+      selectedItems: [],
       shortlists: [],
       auditEvents: [],
     };
@@ -398,6 +431,29 @@ export const createSupabaseQuoteRepository = (
         if (optionError) {
           throw optionError;
         }
+      }
+    }
+
+    const { error: deleteSelectedItemsError } = await client
+      .from("selected_quote_items")
+      .delete()
+      .eq("quote_session_id", record.session.id);
+
+    if (deleteSelectedItemsError) {
+      throw deleteSelectedItemsError;
+    }
+
+    if (record.selectedItems.length > 0) {
+      const { error: selectedItemsError } = await client
+        .from("selected_quote_items")
+        .insert(
+          record.selectedItems.map((option) =>
+            mapSelectedItemInsert(record.session.id, option),
+          ),
+        );
+
+      if (selectedItemsError) {
+        throw selectedItemsError;
       }
     }
 

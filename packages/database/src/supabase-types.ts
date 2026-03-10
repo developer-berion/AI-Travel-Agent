@@ -150,6 +150,33 @@ export type Database = {
         };
         Relationships: [];
       };
+      selected_quote_items: {
+        Row: {
+          created_at: string;
+          id: string;
+          option_snapshot: Json;
+          quote_session_id: string;
+          service_line: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          option_snapshot: Json;
+          quote_session_id: string;
+          service_line: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          option_snapshot?: Json;
+          quote_session_id?: string;
+          service_line?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       shortlists: {
         Row: {
           created_at: string;

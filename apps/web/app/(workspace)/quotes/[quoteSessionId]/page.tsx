@@ -102,7 +102,14 @@ export default async function QuoteSessionPage({
                 </div>
                 <div className="shortlist-grid">
                   {shortlist.items.map((option) => (
-                    <ShortlistCard key={option.id} option={option} />
+                    <ShortlistCard
+                      isSelectedForQuote={record.selectedItems.some(
+                        (item) => item.id === option.id,
+                      )}
+                      key={option.id}
+                      option={option}
+                      quoteSessionId={record.session.id}
+                    />
                   ))}
                 </div>
               </div>

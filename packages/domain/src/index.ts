@@ -159,7 +159,9 @@ export type ContextPackage = {
   missingFields: BlockingField[];
   pendingQuestion: string | null;
   recentMessages: QuoteMessage[];
+  selectedItems: NormalizedOption[];
   shortlists: Shortlist[];
+  bundleReview: BundleReviewView | null;
 };
 
 export type AuditEvent = {
@@ -175,6 +177,9 @@ export type AuditEvent = {
     | "fallback_triggered"
     | "shortlist_created"
     | "state_transition_recorded"
+    | "cart_item_selected"
+    | "cart_item_removed"
+    | "bundle_review_refreshed"
     | "quote_session_archived";
   createdAt: string;
   payload: Record<string, string | number | boolean | null>;
@@ -255,6 +260,10 @@ export const getAllowedCommands = (state: QuoteSessionState) => {
       "archive_quote_session",
     ],
     export_ready: [
+      "select_option_for_cart",
+      "replace_cart_item",
+      "remove_cart_item",
+      "refresh_bundle_review",
       "generate_quote_pdf",
       "apply_requote_change",
       "archive_quote_session",

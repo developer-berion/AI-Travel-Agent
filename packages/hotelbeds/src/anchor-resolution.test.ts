@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import type { StructuredIntake } from "@alana/domain";
 
-import { enrichStructuredIntakeWithHotelbedsAnchors } from "./anchor-resolution";
+import {
+  enrichStructuredIntakeWithHotelbedsAnchors,
+  extractSupportedDestinationKey,
+  resolveSupportedDestinationAnchor,
+} from "./anchor-resolution";
 
 const buildIntake = (
   overrides?: Partial<StructuredIntake>,
@@ -20,6 +24,23 @@ const buildIntake = (
 });
 
 describe("hotelbeds anchor resolution", () => {
+  it("extracts supported destinations from the shared registry with accent-safe matching", () => {
+    expect(
+      extractSupportedDestinationKey("Need hotel in París this summer"),
+    ).toBe("paris");
+    expect(
+      resolveSupportedDestinationAnchor({
+        destination: "",
+        raw: "Necesito actividades en Londres para 2 adultos",
+      }),
+    ).toMatchObject({
+      activityDestinationCode: "LON",
+      canonicalKey: "london",
+      canonicalName: "London",
+      hotelDestinationCode: "LON",
+    });
+  });
+
   it("maps hotel and activity destination anchors for supported cities", () => {
     const intake = buildIntake(
       {
@@ -78,5 +99,54 @@ describe("hotelbeds anchor resolution", () => {
     expect(resolved.extractedFields.transferFromType).toBe("IATA");
     expect(resolved.extractedFields.transferToCode).toBe("265");
     expect(resolved.extractedFields.transferToType).toBe("ATLAS");
+  });
+
+  it("uses structured property anchors when the route references the selected hotel generically", () => {
+    const intake = buildIntake(
+      {
+        requestedServiceLines: ["transfer"],
+      },
+      {
+        destination: "Majorca",
+        raw: "Need transfer from Palma airport to the hotel on 2026-05-08 for 2 adults.",
+        transferPropertyCode: "265",
+        transferPropertyLabel: "HM Jaime III",
+        transferPropertyType: "ATLAS",
+        travelDates: ["2026-05-08", "2026-05-10"],
+      },
+    );
+
+    const resolved = enrichStructuredIntakeWithHotelbedsAnchors(intake);
+
+    expect(resolved.readinessByServiceLine.transfer).toBe("ready");
+    expect(resolved.extractedFields.transferFromCode).toBe("PMI");
+    expect(resolved.extractedFields.transferToCode).toBe("265");
+    expect(resolved.extractedFields.transferToLabel).toBe("HM Jaime III");
+  });
+
+  it("keeps direct route anchors ready without depending on the raw text order", () => {
+    const intake = buildIntake(
+      {
+        requestedServiceLines: ["transfer"],
+      },
+      {
+        destination: "Majorca",
+        raw: "Need the same transfer route confirmed again.",
+        transferFromCode: "PMI",
+        transferFromLabel: "Majorca - Palma Airport",
+        transferFromType: "IATA",
+        transferToCode: "265",
+        transferToLabel: "HM Jaime III",
+        transferToType: "ATLAS",
+        travelDates: ["2026-05-08", "2026-05-10"],
+      },
+    );
+
+    const resolved = enrichStructuredIntakeWithHotelbedsAnchors(intake);
+
+    expect(resolved.readinessByServiceLine.transfer).toBe("ready");
+    expect(resolved.extractedFields.transferReadinessNote).toBe(
+      "Transfer route resolved from Majorca - Palma Airport to HM Jaime III.",
+    );
   });
 });

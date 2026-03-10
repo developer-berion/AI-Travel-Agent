@@ -1,18 +1,46 @@
 "use client";
 
 import clsx from "clsx";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { useCompareStore } from "@/state/compare-store";
 import type { NormalizedOption } from "@alana/domain";
 
 export const ShortlistCard = ({
+  isSelectedForQuote,
   option,
+  quoteSessionId,
 }: {
+  isSelectedForQuote: boolean;
   option: NormalizedOption;
+  quoteSessionId: string;
 }) => {
+  const router = useRouter();
   const selectedOptionIds = useCompareStore((state) => state.selectedOptionIds);
   const toggleOption = useCompareStore((state) => state.toggleOption);
   const isSelected = selectedOptionIds.includes(option.id);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const selectForQuote = async () => {
+    setIsSubmitting(true);
+
+    await fetch(`/api/quote-sessions/${quoteSessionId}/commands`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        commandName: "select_option_for_cart",
+        payload: {
+          optionId: option.id,
+        },
+      }),
+    });
+
+    setIsSubmitting(false);
+    router.refresh();
+  };
 
   return (
     <article className="shortlist-card">
@@ -38,8 +66,17 @@ export const ShortlistCard = ({
         >
           {isSelected ? "Selected for compare" : "Add to compare"}
         </button>
-        <button className="ghost-button" type="button">
-          Add to cart
+        <button
+          className={clsx("ghost-button", isSelectedForQuote && "selected")}
+          disabled={isSubmitting}
+          onClick={selectForQuote}
+          type="button"
+        >
+          {isSubmitting
+            ? "Selecting..."
+            : isSelectedForQuote
+              ? "Selected for quote"
+              : "Select for quote"}
         </button>
       </div>
     </article>

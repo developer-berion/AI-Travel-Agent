@@ -50,6 +50,7 @@ export const createMockQuoteRepository = (): QuoteRepository => {
         },
         messages: [],
         intake: null,
+        selectedItems: [],
         shortlists: [],
         auditEvents: [],
       };

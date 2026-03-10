@@ -1,4 +1,4 @@
-import type { QuoteRecord } from "@alana/database";
+import { type QuoteRecord, buildBundleReviewView } from "@alana/database";
 import type { ServiceLine } from "@alana/domain";
 
 const getServiceLineReadinessNote = (
@@ -17,6 +17,7 @@ export const RightRail = ({
   record: QuoteRecord;
 }) => {
   const blockers = record.intake?.missingFields ?? [];
+  const bundleReview = buildBundleReviewView(record);
   const serviceReadiness =
     record.intake?.requestedServiceLines.map((serviceLine) => ({
       note: getServiceLineReadinessNote(
@@ -86,6 +87,50 @@ export const RightRail = ({
           <p className="muted">{record.session.pendingQuestion}</p>
         ) : null}
       </section>
+
+      {bundleReview ? (
+        <section className="rail-card">
+          <p className="eyebrow">Bundle review</p>
+          <p className="muted">
+            {bundleReview.isExportReady
+              ? "La seleccion actual ya puede pasar al siguiente paso de export."
+              : "El bundle sigue en revision y todavia no esta listo para export."}
+          </p>
+          {bundleReview.selectedItems.length > 0 ? (
+            <ul className="card-list">
+              {bundleReview.selectedItems.map((item) => (
+                <li key={item.id}>
+                  <strong>
+                    {item.serviceLine}: {item.title}
+                  </strong>
+                  <p className="muted">
+                    {item.currency} {item.headlinePrice}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {bundleReview.blockers.length > 0 ? (
+            <ul className="card-list">
+              {bundleReview.blockers.map((blocker) => (
+                <li key={blocker}>{blocker}</li>
+              ))}
+            </ul>
+          ) : null}
+          {bundleReview.warnings.length > 0 ? (
+            <ul className="card-list">
+              {bundleReview.warnings.map((warning) => (
+                <li key={warning}>{warning}</li>
+              ))}
+            </ul>
+          ) : null}
+          {bundleReview.currency ? (
+            <p className="muted">
+              Total bundle: {bundleReview.currency} {bundleReview.totalPrice}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
     </aside>
   );
 };

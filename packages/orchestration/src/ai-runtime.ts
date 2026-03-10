@@ -4,44 +4,10 @@ import type {
   ServiceLineReadiness,
   StructuredIntake,
 } from "@alana/domain";
+import { extractSupportedDestinationKey } from "@alana/hotelbeds";
 import { createId, nowIso } from "@alana/shared";
 import OpenAI from "openai";
 import type { ReasoningEffort } from "openai/resources/shared";
-
-const knownDestinations = [
-  {
-    canonical: "paris",
-    aliases: ["paris"],
-  },
-  {
-    canonical: "madrid",
-    aliases: ["madrid"],
-  },
-  {
-    canonical: "rome",
-    aliases: ["rome", "roma"],
-  },
-  {
-    canonical: "barcelona",
-    aliases: ["barcelona"],
-  },
-  {
-    canonical: "cancun",
-    aliases: ["cancun", "cancun mexico"],
-  },
-  {
-    canonical: "miami",
-    aliases: ["miami"],
-  },
-  {
-    canonical: "london",
-    aliases: ["london", "londres"],
-  },
-  {
-    canonical: "majorca",
-    aliases: ["majorca", "mallorca", "palma", "palma de mallorca"],
-  },
-] as const;
 
 type IntakeExtractionResult = {
   contradictions: string[];
@@ -183,6 +149,13 @@ const getNumberField = (value: unknown) =>
 
 const dedupeValues = <T>(values: T[]) => [...new Set(values)];
 
+const normalizeTravelDates = (values: string[]) =>
+  dedupeValues(
+    values.flatMap((value) =>
+      [...value.matchAll(/\b\d{4}-\d{2}-\d{2}\b/g)].map((match) => match[0]),
+    ),
+  );
+
 const shouldOverrideNumericField = (content: string, patterns: RegExp[]) =>
   patterns.some((pattern) => pattern.test(content));
 
@@ -195,7 +168,9 @@ const buildIntakeResult = (
 ): IntakeExtractionResult => {
   const existingFields = existingIntake?.extractedFields ?? {};
   const existingDestination = getStringField(existingFields.destination);
-  const existingTravelDates = getStringArrayField(existingFields.travelDates);
+  const existingTravelDates = normalizeTravelDates(
+    getStringArrayField(existingFields.travelDates),
+  );
   const existingChildAges = getStringArrayField(existingFields.childAges);
   const existingAdults = getNumberField(existingFields.adults);
   const existingChildren = getNumberField(existingFields.children);
@@ -232,8 +207,9 @@ const buildIntakeResult = (
       ? payload.infants
       : existingInfants;
   const destination = payload.destination.trim() || existingDestination;
+  const nextTravelDates = normalizeTravelDates(payload.travelDates);
   const travelDates =
-    payload.travelDates.length > 0 ? payload.travelDates : existingTravelDates;
+    nextTravelDates.length > 0 ? nextTravelDates : existingTravelDates;
   const childAges =
     nextChildAges.length > 0 ? nextChildAges : existingChildAges;
   const normalizedMissingFields = buildMissingFields({
@@ -298,9 +274,7 @@ const parseServiceLines = (content: string): ServiceLine[] => {
 };
 
 const extractDestination = (content: string) =>
-  knownDestinations.find((destination) =>
-    destination.aliases.some((alias) => content.toLowerCase().includes(alias)),
-  )?.canonical ?? "";
+  extractSupportedDestinationKey(content);
 
 const extractDates = (content: string) =>
   [...content.matchAll(/\b\d{4}-\d{2}-\d{2}\b/g)].map((match) => match[0]);

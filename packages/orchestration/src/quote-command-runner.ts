@@ -1,6 +1,7 @@
 import {
   type QuoteRecord,
   type QuoteRepository,
+  buildBundleReviewView,
   buildContextPackage,
   updateSessionMeta,
 } from "@alana/database";
@@ -60,6 +61,26 @@ const getServiceLineReadinessNote = (
     : null;
 };
 
+const getTripStartDate = (extractedFields: Record<string, unknown>) => {
+  if (!Array.isArray(extractedFields.travelDates)) {
+    return null;
+  }
+
+  for (const value of extractedFields.travelDates) {
+    if (typeof value !== "string") {
+      continue;
+    }
+
+    const match = value.match(/\b\d{4}-\d{2}-\d{2}\b/);
+
+    if (match) {
+      return match[0];
+    }
+  }
+
+  return null;
+};
+
 const getSupplierAnchorQuestion = (record: QuoteRecord) => {
   const intake = record.intake;
 
@@ -98,6 +119,42 @@ const getSupplierAnchorQuestion = (record: QuoteRecord) => {
     readinessNote ??
     "Necesito un destino soportado para poder mapear la busqueda de actividades."
   );
+};
+
+const findShortlistOption = (record: QuoteRecord, optionId: string) =>
+  record.shortlists
+    .flatMap((shortlist) => shortlist.items)
+    .find((option) => option.id === optionId);
+
+const buildBundleSummary = (record: QuoteRecord) => {
+  const bundleReview = buildBundleReviewView(record);
+
+  if (!bundleReview) {
+    return {
+      bundleReview: null,
+      nextAction: "bundle_blocked" as const,
+      targetState: "reviewing" as const,
+      summary: "Todavia no existe una seleccion para bundle review.",
+    };
+  }
+
+  if (bundleReview.isExportReady) {
+    return {
+      bundleReview,
+      nextAction: "export_ready" as const,
+      targetState: "export_ready" as const,
+      summary: `Bundle review listo con ${bundleReview.selectedItems.length} item(s) seleccionados.`,
+    };
+  }
+
+  return {
+    bundleReview,
+    nextAction: "bundle_blocked" as const,
+    targetState: "reviewing" as const,
+    summary:
+      bundleReview.blockers[0] ??
+      "El bundle review sigue en revision y necesita mas selecciones.",
+  };
 };
 
 export const createQuoteCommandRunner = (dependencies?: {
@@ -179,6 +236,7 @@ export const createQuoteCommandRunner = (dependencies?: {
 
       if (intake.missingFields.length > 0) {
         record.shortlists = [];
+        record.selectedItems = [];
         record.session = updateSessionMeta(record.session, {
           latestContextSummary:
             "El caso necesita clarificacion minima antes de buscar.",
@@ -189,11 +247,7 @@ export const createQuoteCommandRunner = (dependencies?: {
             intake.extractedFields.destination.length > 0
               ? `Trip to ${String(intake.extractedFields.destination)}`
               : record.session.tripLabel,
-          tripStartDate:
-            Array.isArray(intake.extractedFields.travelDates) &&
-            intake.extractedFields.travelDates.length > 0
-              ? String(intake.extractedFields.travelDates[0])
-              : null,
+          tripStartDate: getTripStartDate(intake.extractedFields),
         });
         await repository.saveRecord(record);
         await pushAudit("readiness_validated", {
@@ -225,15 +279,14 @@ export const createQuoteCommandRunner = (dependencies?: {
 
       if (readyServiceLines.length === 0) {
         record.shortlists = [];
+        record.selectedItems = [];
         record.session = updateSessionMeta(record.session, {
           latestContextSummary:
             "Necesito anchors supplier-ready antes de ejecutar la cotizacion.",
           pendingQuestion: getSupplierAnchorQuestion(record),
           status: "clarifying",
           tripLabel: `Trip to ${String(intake.extractedFields.destination)}`,
-          tripStartDate: String(
-            (intake.extractedFields.travelDates as string[])[0] ?? "",
-          ),
+          tripStartDate: getTripStartDate(intake.extractedFields),
         });
         await repository.saveRecord(record);
         await pushAudit("readiness_validated", {
@@ -264,9 +317,7 @@ export const createQuoteCommandRunner = (dependencies?: {
         pendingQuestion: null,
         status: "searching",
         tripLabel: `Trip to ${String(intake.extractedFields.destination)}`,
-        tripStartDate: String(
-          (intake.extractedFields.travelDates as string[])[0] ?? "",
-        ),
+        tripStartDate: getTripStartDate(intake.extractedFields),
       });
       await pushAudit("readiness_validated", { blockerCount: 0, ready: true });
 
@@ -276,6 +327,7 @@ export const createQuoteCommandRunner = (dependencies?: {
         ),
       );
 
+      record.selectedItems = [];
       record.shortlists = results.map((result) => ({
         id: createId(),
         items: result.options,
@@ -345,9 +397,146 @@ export const createQuoteCommandRunner = (dependencies?: {
         quoteSessionId: record.session.id,
         sessionStateVersion: record.session.activeQuoteVersion,
         viewModelDelta: {
+          bundleReview: buildBundleReviewView(record),
           contextPackage: buildContextPackage(record),
           shortlists: record.shortlists,
           summary: buildAssistantSummary(record),
+        },
+      };
+    }
+
+    if (
+      envelope.commandName === "select_option_for_cart" ||
+      envelope.commandName === "replace_cart_item"
+    ) {
+      const optionId = String(envelope.payload.optionId ?? "");
+      const selectedOption = findShortlistOption(record, optionId);
+
+      if (!selectedOption) {
+        throw new Error("quote_option_not_found");
+      }
+
+      const previousSelection = record.selectedItems.find(
+        (item) => item.serviceLine === selectedOption.serviceLine,
+      );
+      const hasSelectionChanged = previousSelection?.id !== selectedOption.id;
+
+      record.selectedItems = [
+        ...record.selectedItems.filter(
+          (item) => item.serviceLine !== selectedOption.serviceLine,
+        ),
+        selectedOption,
+      ];
+
+      const bundleSummary = buildBundleSummary(record);
+      record.session = updateSessionMeta(record.session, {
+        activeQuoteVersion: hasSelectionChanged
+          ? record.session.activeQuoteVersion + 1
+          : record.session.activeQuoteVersion,
+        latestContextSummary: bundleSummary.summary,
+        pendingQuestion: null,
+        status: bundleSummary.targetState,
+      });
+      await repository.saveRecord(record);
+      await pushAudit("cart_item_selected", {
+        exportReady: bundleSummary.bundleReview?.isExportReady ?? false,
+        optionChanged: hasSelectionChanged,
+        optionId: selectedOption.id,
+        serviceLine: selectedOption.serviceLine,
+      });
+      await pushAudit("bundle_review_refreshed", {
+        blockerCount: bundleSummary.bundleReview?.blockers.length ?? 0,
+        exportReady: bundleSummary.bundleReview?.isExportReady ?? false,
+        selectedItems: bundleSummary.bundleReview?.selectedItems.length ?? 0,
+      });
+
+      return {
+        auditEventIds,
+        commandId: envelope.commandId,
+        nextAction: bundleSummary.nextAction,
+        quoteSessionId: record.session.id,
+        sessionStateVersion: record.session.activeQuoteVersion,
+        viewModelDelta: {
+          bundleReview: bundleSummary.bundleReview,
+          contextPackage: buildContextPackage(record),
+          selectedItems: record.selectedItems,
+        },
+      };
+    }
+
+    if (envelope.commandName === "remove_cart_item") {
+      const optionId = String(envelope.payload.optionId ?? "");
+      const serviceLine = String(envelope.payload.serviceLine ?? "");
+      const itemToRemove = record.selectedItems.find(
+        (item) =>
+          (optionId.length > 0 && item.id === optionId) ||
+          (serviceLine.length > 0 && item.serviceLine === serviceLine),
+      );
+
+      if (!itemToRemove) {
+        throw new Error("quote_cart_item_not_found");
+      }
+
+      record.selectedItems = record.selectedItems.filter(
+        (item) => item.id !== itemToRemove.id,
+      );
+
+      const bundleSummary = buildBundleSummary(record);
+      record.session = updateSessionMeta(record.session, {
+        activeQuoteVersion: record.session.activeQuoteVersion + 1,
+        latestContextSummary: bundleSummary.summary,
+        pendingQuestion: null,
+        status: bundleSummary.targetState,
+      });
+      await repository.saveRecord(record);
+      await pushAudit("cart_item_removed", {
+        optionId: itemToRemove.id,
+        serviceLine: itemToRemove.serviceLine,
+      });
+      await pushAudit("bundle_review_refreshed", {
+        blockerCount: bundleSummary.bundleReview?.blockers.length ?? 0,
+        exportReady: bundleSummary.bundleReview?.isExportReady ?? false,
+        selectedItems: bundleSummary.bundleReview?.selectedItems.length ?? 0,
+      });
+
+      return {
+        auditEventIds,
+        commandId: envelope.commandId,
+        nextAction: bundleSummary.nextAction,
+        quoteSessionId: record.session.id,
+        sessionStateVersion: record.session.activeQuoteVersion,
+        viewModelDelta: {
+          bundleReview: bundleSummary.bundleReview,
+          contextPackage: buildContextPackage(record),
+          selectedItems: record.selectedItems,
+        },
+      };
+    }
+
+    if (envelope.commandName === "refresh_bundle_review") {
+      const bundleSummary = buildBundleSummary(record);
+      record.session = updateSessionMeta(record.session, {
+        latestContextSummary: bundleSummary.summary,
+        pendingQuestion: null,
+        status: bundleSummary.targetState,
+      });
+      await repository.saveRecord(record);
+      await pushAudit("bundle_review_refreshed", {
+        blockerCount: bundleSummary.bundleReview?.blockers.length ?? 0,
+        exportReady: bundleSummary.bundleReview?.isExportReady ?? false,
+        selectedItems: bundleSummary.bundleReview?.selectedItems.length ?? 0,
+      });
+
+      return {
+        auditEventIds,
+        commandId: envelope.commandId,
+        nextAction: bundleSummary.nextAction,
+        quoteSessionId: record.session.id,
+        sessionStateVersion: record.session.activeQuoteVersion,
+        viewModelDelta: {
+          bundleReview: bundleSummary.bundleReview,
+          contextPackage: buildContextPackage(record),
+          selectedItems: record.selectedItems,
         },
       };
     }

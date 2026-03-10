@@ -144,6 +144,120 @@ describe("hotelbeds real adapter", () => {
     expect(result.options[0]?.availabilityState).toBe("available");
   });
 
+  it("sends child ages in hotel occupancies when the intake is supplier-ready", async () => {
+    const fetchMock = vi.fn(async (_input, init) => {
+      const body = JSON.parse(String(init?.body ?? "{}")) as {
+        occupancies?: unknown[];
+      };
+
+      expect(body.occupancies).toEqual([
+        {
+          adults: 2,
+          children: 2,
+          paxes: [
+            { age: 30, type: "AD" },
+            { age: 30, type: "AD" },
+            { age: 4, type: "CH" },
+            { age: 7, type: "CH" },
+          ],
+          rooms: 1,
+        },
+      ]);
+
+      return new Response(
+        JSON.stringify({
+          hotels: {
+            hotels: [
+              {
+                code: 14915,
+                currency: "EUR",
+                destinationCode: "BCN",
+                destinationName: "Barcelona",
+                minRate: "525.44",
+                name: "Alexandre Fira Congress Barcelona",
+              },
+            ],
+          },
+        }),
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          status: 200,
+        },
+      );
+    }) as unknown as typeof fetch;
+    const adapter = createHotelbedsAdapter(buildConfig(fetchMock));
+
+    const result = await adapter.search(
+      buildIntake({
+        adults: 2,
+        childAges: ["4", "7"],
+        children: 2,
+        destination: "Barcelona",
+        destinationCode: "BCN",
+        hotelDestinationCode: "BCN",
+        travelDates: ["2026-05-08", "2026-05-10"],
+      }),
+      "hotel",
+    );
+
+    expect(result.error).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("blocks hotel search when child ages are incomplete", async () => {
+    const fetchMock = vi.fn() as unknown as typeof fetch;
+    const adapter = createHotelbedsAdapter(buildConfig(fetchMock));
+
+    const result = await adapter.search(
+      buildIntake({
+        adults: 2,
+        childAges: ["4"],
+        children: 2,
+        destination: "Barcelona",
+        destinationCode: "BCN",
+        hotelDestinationCode: "BCN",
+        travelDates: ["2026-05-08", "2026-05-10"],
+      }),
+      "hotel",
+    );
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(result.error?.code).toBe("missing_required_field");
+  });
+
+  it("maps supplier auth failures to auth_or_signature_error", async () => {
+    const fetchMock = vi.fn(async () => {
+      return new Response(
+        JSON.stringify({
+          message: "Invalid Api-key",
+        }),
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          status: 401,
+        },
+      );
+    }) as unknown as typeof fetch;
+    const adapter = createHotelbedsAdapter(buildConfig(fetchMock));
+
+    const result = await adapter.search(
+      buildIntake({
+        activityDestinationCode: "PMI",
+        adults: 2,
+        children: 0,
+        destination: "Majorca",
+        travelDates: ["2026-05-20", "2026-05-22"],
+      }),
+      "activity",
+    );
+
+    expect(result.options).toEqual([]);
+    expect(result.error?.code).toBe("auth_or_signature_error");
+  });
+
   it("marks activities as weak when Hotelbeds returns a single option", async () => {
     const fetchMock = vi.fn(async () => {
       return new Response(
