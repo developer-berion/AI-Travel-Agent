@@ -439,11 +439,20 @@ const normalizeHotels = (
           ? "Hotelbeds devuelve taxes no incluidas en esta tarifa; revisa el disclosure antes de compartir."
           : null;
 
-      const transferPropertyAnchor = resolveTransferPropertyAnchor({
-        destination: hotel.destinationName,
-        hotelCode: hotel.code ? `${hotel.code}` : null,
-        hotelName: hotel.name,
-      });
+      // Prefer the supplier hotel code because the transfers API accepts it as
+      // a direct ATLAS destination; keep the registry lookup only as fallback.
+      const transferPropertyAnchor =
+        hotel.code && hotel.name
+          ? {
+              code: `${hotel.code}`,
+              label: hotel.name,
+              type: "ATLAS",
+            }
+          : resolveTransferPropertyAnchor({
+              destination: hotel.destinationName,
+              hotelCode: hotel.code ? `${hotel.code}` : null,
+              hotelName: hotel.name,
+            });
 
       const option: NormalizedOption = {
         id: createId(),

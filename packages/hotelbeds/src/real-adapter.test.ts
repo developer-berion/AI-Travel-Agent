@@ -141,7 +141,67 @@ describe("hotelbeds real adapter", () => {
     expect(result.options).toHaveLength(1);
     expect(result.options[0]?.headlinePrice).toBe(525.44);
     expect(result.options[0]?.supplierMetadata.source).toBe("hotelbeds_hotels");
+    expect(result.options[0]?.supplierMetadata.transferPropertyCode).toBe(
+      "14915",
+    );
+    expect(result.options[0]?.supplierMetadata.transferPropertyLabel).toBe(
+      "Alexandre Fira Congress Barcelona",
+    );
+    expect(result.options[0]?.supplierMetadata.transferPropertyType).toBe(
+      "ATLAS",
+    );
     expect(result.options[0]?.availabilityState).toBe("available");
+  });
+
+  it("falls back to the supported transfer registry when the hotel code is missing", async () => {
+    const fetchMock = vi.fn(async () => {
+      return new Response(
+        JSON.stringify({
+          hotels: {
+            hotels: [
+              {
+                currency: "EUR",
+                destinationCode: "PMI",
+                destinationName: "Majorca",
+                minRate: "210.10",
+                name: "HM Jaime III",
+              },
+            ],
+          },
+        }),
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          status: 200,
+        },
+      );
+    }) as unknown as typeof fetch;
+    const adapter = createHotelbedsAdapter(buildConfig(fetchMock));
+
+    const result = await adapter.search(
+      buildIntake({
+        adults: 2,
+        children: 0,
+        destination: "Majorca",
+        destinationCode: "PMI",
+        hotelDestinationCode: "PMI",
+        travelDates: ["2026-05-08", "2026-05-10"],
+      }),
+      "hotel",
+    );
+
+    expect(result.error).toBeNull();
+    expect(result.options).toHaveLength(1);
+    expect(result.options[0]?.supplierMetadata.transferPropertyCode).toBe(
+      "265",
+    );
+    expect(result.options[0]?.supplierMetadata.transferPropertyLabel).toBe(
+      "HM Jaime III",
+    );
+    expect(result.options[0]?.supplierMetadata.transferPropertyType).toBe(
+      "ATLAS",
+    );
   });
 
   it("sends child ages in hotel occupancies when the intake is supplier-ready", async () => {
