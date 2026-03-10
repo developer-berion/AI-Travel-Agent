@@ -276,6 +276,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      quote_exports: {
+        Row: {
+          active_quote_version: number;
+          created_at: string;
+          file_name: string;
+          file_size_bytes: number;
+          id: string;
+          mime_type: string;
+          quote_session_id: string;
+          snapshot_id: string;
+          storage_bucket: string;
+          storage_path: string;
+        };
+        Insert: {
+          active_quote_version: number;
+          created_at?: string;
+          file_name: string;
+          file_size_bytes: number;
+          id?: string;
+          mime_type: string;
+          quote_session_id: string;
+          snapshot_id: string;
+          storage_bucket: string;
+          storage_path: string;
+        };
+        Update: {
+          active_quote_version?: number;
+          created_at?: string;
+          file_name?: string;
+          file_size_bytes?: number;
+          id?: string;
+          mime_type?: string;
+          quote_session_id?: string;
+          snapshot_id?: string;
+          storage_bucket?: string;
+          storage_path?: string;
+        };
+        Relationships: [];
+      };
       audit_events: {
         Row: {
           created_at: string;

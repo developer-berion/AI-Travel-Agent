@@ -1,6 +1,8 @@
 import { type QuoteRecord, buildBundleReviewView } from "@alana/database";
 import type { ServiceLine } from "@alana/domain";
 
+import { ExportQuoteButton } from "./export-quote-button";
+
 const getServiceLineReadinessNote = (
   extractedFields: Record<string, unknown>,
   serviceLine: ServiceLine,
@@ -128,6 +130,9 @@ export const RightRail = ({
             <p className="muted">
               Total bundle: {bundleReview.currency} {bundleReview.totalPrice}
             </p>
+          ) : null}
+          {bundleReview.isExportReady ? (
+            <ExportQuoteButton quoteSessionId={record.session.id} />
           ) : null}
         </section>
       ) : null}

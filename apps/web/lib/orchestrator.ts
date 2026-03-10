@@ -3,7 +3,9 @@ import {
   createOpenAiResponsesRuntime,
   createQuoteCommandRunner,
 } from "@alana/orchestration";
+import { renderQuotePdf } from "@alana/pdf-renderer";
 
+import { getQuoteExportStorage } from "@/lib/quote-export-storage";
 import { assertHotelbedsEnabled, getRuntimeConfig } from "@/lib/runtime-config";
 
 export const getQuoteCommandRunner = () => {
@@ -43,6 +45,11 @@ export const getQuoteCommandRunner = () => {
       },
     });
   }
+
+  dependencies.quotePdfRenderer = {
+    render: renderQuotePdf,
+  };
+  dependencies.quoteExportStorage = getQuoteExportStorage();
 
   return createQuoteCommandRunner(dependencies);
 };

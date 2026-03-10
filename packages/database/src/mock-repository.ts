@@ -1,9 +1,17 @@
-import type { AuditEvent, QuoteMessage, QuoteSession } from "@alana/domain";
+import type {
+  AuditEvent,
+  QuoteExport,
+  QuoteExportSnapshot,
+  QuoteMessage,
+  QuoteSession,
+} from "@alana/domain";
 import { createId, nowIso } from "@alana/shared";
 
 import type { QuoteRecord, QuoteRepository } from "./context-package";
 
 type Store = {
+  exports: Map<string, QuoteExport>;
+  exportSnapshots: Map<string, QuoteExportSnapshot>;
   records: Map<string, QuoteRecord>;
 };
 
@@ -15,7 +23,9 @@ const getStore = (): Store => {
 
   if (!globalStore[key]) {
     globalStore[key] = {
+      exports: new Map<string, QuoteExport>(),
       records: new Map<string, QuoteRecord>(),
+      exportSnapshots: new Map<string, QuoteExportSnapshot>(),
     };
   }
 
@@ -114,6 +124,43 @@ export const createMockQuoteRepository = (): QuoteRepository => {
 
       record.auditEvents.push(createdEvent);
       return createdEvent;
+    },
+    createQuoteExportSnapshot(snapshot) {
+      const createdSnapshot: QuoteExportSnapshot = {
+        createdAt: nowIso(),
+        id: createId(),
+        ...snapshot,
+      };
+
+      store.exportSnapshots.set(createdSnapshot.id, createdSnapshot);
+      return createdSnapshot;
+    },
+    createQuoteExport(quoteExport) {
+      const createdExport: QuoteExport = {
+        createdAt: nowIso(),
+        ...quoteExport,
+      };
+
+      store.exports.set(createdExport.id, createdExport);
+      return createdExport;
+    },
+    getQuoteExport(quoteSessionId, exportId) {
+      const quoteExport = store.exports.get(exportId);
+
+      if (!quoteExport || quoteExport.quoteSessionId !== quoteSessionId) {
+        return null;
+      }
+
+      return quoteExport;
+    },
+    getQuoteExportSnapshot(quoteSessionId, snapshotId) {
+      const snapshot = store.exportSnapshots.get(snapshotId);
+
+      if (!snapshot || snapshot.quoteSessionId !== quoteSessionId) {
+        return null;
+      }
+
+      return snapshot;
     },
   };
 };

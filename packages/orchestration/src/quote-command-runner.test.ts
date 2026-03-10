@@ -210,6 +210,179 @@ describe("quote command runner", () => {
     ).toBe(true);
   });
 
+  it("uses the selected hotel to unlock transfer search after a partial shortlist", async () => {
+    const repository = createMockQuoteRepository();
+    const record = await repository.createSession({
+      operatorId: createId(),
+      title: "Transfer after hotel choice",
+      agencyName: "Alana",
+    });
+    const runQuoteCommand = createQuoteCommandRunner({
+      aiRuntime: createMockAiRuntime(),
+    });
+
+    await runQuoteCommand(repository, {
+      commandId: createId(),
+      commandName: "append_operator_message",
+      quoteSessionId: record.session.id,
+      actor: {
+        operatorId: record.session.operatorId,
+        role: "operator",
+      },
+      idempotencyKey: createId(),
+      createdAt: nowIso(),
+      payload: {
+        content:
+          "Need hotel and transfer from Palma airport to the hotel in Majorca from 2026-05-08 to 2026-05-10 for 2 adults",
+      },
+    });
+
+    const partialRecord = await repository.getRecord(record.session.id);
+    const hotelOptionId = partialRecord?.shortlists.find(
+      (shortlist) => shortlist.serviceLine === "hotel",
+    )?.items[0]?.id;
+
+    expect(partialRecord?.session.status).toBe("clarifying");
+    expect(hotelOptionId).toBeTruthy();
+
+    const result = await runQuoteCommand(repository, {
+      commandId: createId(),
+      commandName: "select_option_for_cart",
+      quoteSessionId: record.session.id,
+      actor: {
+        operatorId: record.session.operatorId,
+        role: "operator",
+      },
+      idempotencyKey: createId(),
+      createdAt: nowIso(),
+      payload: {
+        optionId: hotelOptionId,
+      },
+    });
+
+    const storedRecord = await repository.getRecord(record.session.id);
+
+    expect(result.nextAction).toBe("bundle_blocked");
+    expect(storedRecord?.session.status).toBe("reviewing");
+    expect(storedRecord?.intake?.readinessByServiceLine.transfer).toBe("ready");
+    expect(
+      storedRecord?.shortlists.some(
+        (shortlist) => shortlist.serviceLine === "transfer",
+      ),
+    ).toBe(true);
+    expect(storedRecord?.selectedItems).toHaveLength(1);
+  });
+
+  it("creates a real export snapshot and moves the session to exported", async () => {
+    const repository = createMockQuoteRepository();
+    const record = await repository.createSession({
+      operatorId: createId(),
+      title: "Export snapshot session",
+      agencyName: "Alana",
+    });
+    const quotePdfRenderer = {
+      render: vi.fn(async () =>
+        new TextEncoder().encode("%PDF-1.4 mock export"),
+      ),
+    };
+    const quoteExportStorage = {
+      storeFile: vi.fn(
+        async (input: {
+          bytes: Uint8Array;
+          exportId: string;
+          fileName: string;
+          mimeType: string;
+          quoteSessionId: string;
+        }) => ({
+          fileName: input.fileName,
+          fileSizeBytes: input.bytes.byteLength,
+          mimeType: input.mimeType,
+          storageBucket: "quote-exports",
+          storagePath: `quote-sessions/${input.quoteSessionId}/exports/${input.exportId}/${input.fileName}`,
+        }),
+      ),
+    };
+    const runQuoteCommand = createQuoteCommandRunner({
+      aiRuntime: createMockAiRuntime(),
+      quoteExportStorage,
+      quotePdfRenderer,
+    });
+
+    await runQuoteCommand(repository, {
+      commandId: createId(),
+      commandName: "append_operator_message",
+      quoteSessionId: record.session.id,
+      actor: {
+        operatorId: record.session.operatorId,
+        role: "operator",
+      },
+      idempotencyKey: createId(),
+      createdAt: nowIso(),
+      payload: {
+        content:
+          "Need hotel in Madrid from 2026-05-01 to 2026-05-05 for 2 adults",
+      },
+    });
+
+    const optionId = (await repository.getRecord(record.session.id))
+      ?.shortlists[0]?.items[0]?.id;
+
+    await runQuoteCommand(repository, {
+      commandId: createId(),
+      commandName: "select_option_for_cart",
+      quoteSessionId: record.session.id,
+      actor: {
+        operatorId: record.session.operatorId,
+        role: "operator",
+      },
+      idempotencyKey: createId(),
+      createdAt: nowIso(),
+      payload: {
+        optionId,
+      },
+    });
+
+    const exportResult = await runQuoteCommand(repository, {
+      commandId: createId(),
+      commandName: "generate_quote_pdf",
+      quoteSessionId: record.session.id,
+      actor: {
+        operatorId: record.session.operatorId,
+        role: "operator",
+      },
+      idempotencyKey: createId(),
+      createdAt: nowIso(),
+      payload: {},
+    });
+
+    const storedRecord = await repository.getRecord(record.session.id);
+    const exportId = exportResult.viewModelDelta.exportId as string | undefined;
+    const quoteExport = exportId
+      ? await repository.getQuoteExport(record.session.id, exportId)
+      : null;
+    const exportSnapshot = quoteExport
+      ? await repository.getQuoteExportSnapshot(
+          record.session.id,
+          quoteExport.snapshotId,
+        )
+      : null;
+
+    expect(exportId).toBeTruthy();
+    expect(storedRecord?.session.status).toBe("exported");
+    expect(quoteExport?.mimeType).toBe("application/pdf");
+    expect(exportSnapshot?.bundleReview.isExportReady).toBe(true);
+    expect(exportResult.viewModelDelta.pdfPath).toBe(
+      `/api/quote-sessions/${record.session.id}/exports/${exportId}/pdf`,
+    );
+    expect(quotePdfRenderer.render).toHaveBeenCalledTimes(1);
+    expect(quoteExportStorage.storeFile).toHaveBeenCalledTimes(1);
+    expect(
+      storedRecord?.auditEvents.some(
+        (event) => event.eventName === "quote_export_generated",
+      ),
+    ).toBe(true);
+  });
+
   it("extracts a Supabase-safe trip start date even when the AI runtime returns a combined date range string", async () => {
     const repository = createMockQuoteRepository();
     const record = await repository.createSession({

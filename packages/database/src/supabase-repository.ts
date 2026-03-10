@@ -3,6 +3,8 @@ import type {
   BlockingField,
   CommercialStatus,
   NormalizedOption,
+  QuoteExport,
+  QuoteExportSnapshot,
   QuoteMessage,
   QuoteSession,
   QuoteSessionState,
@@ -16,6 +18,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { QuoteRecord, QuoteRepository } from "./context-package";
 import type { Database, Json } from "./supabase-types";
+
+type QuoteExportSnapshotPayload = Omit<
+  QuoteExportSnapshot,
+  "createdAt" | "id"
+> & {
+  kind: "quote_export_snapshot";
+};
 
 const mapSessionRow = (
   row: Database["public"]["Tables"]["quote_sessions"]["Row"],
@@ -76,6 +85,53 @@ const mapAuditEventRow = (
   eventName: row.event_name as AuditEvent["eventName"],
   payload: row.payload as AuditEvent["payload"],
   createdAt: row.created_at,
+});
+
+const mapQuoteExportSnapshotRow = (
+  row: Database["public"]["Tables"]["quote_context_snapshots"]["Row"],
+): QuoteExportSnapshot | null => {
+  const payload = row.payload as Partial<QuoteExportSnapshotPayload> | null;
+
+  if (payload?.kind !== "quote_export_snapshot") {
+    return null;
+  }
+
+  return {
+    activeQuoteVersion: Number(payload.activeQuoteVersion ?? 0),
+    agencyName: String(payload.agencyName ?? ""),
+    bundleReview: payload.bundleReview as QuoteExportSnapshot["bundleReview"],
+    commercialStatus:
+      payload.commercialStatus as QuoteExportSnapshot["commercialStatus"],
+    confirmedStateSummary: String(payload.confirmedStateSummary ?? ""),
+    createdAt: row.created_at,
+    id: row.id,
+    quoteSessionId: row.quote_session_id,
+    recommendationMode:
+      payload.recommendationMode as QuoteExportSnapshot["recommendationMode"],
+    selectedItems:
+      (payload.selectedItems as QuoteExportSnapshot["selectedItems"]) ?? [],
+    status: payload.status as QuoteExportSnapshot["status"],
+    summary: row.summary,
+    title: String(payload.title ?? ""),
+    tripLabel: String(payload.tripLabel ?? ""),
+    tripStartDate:
+      typeof payload.tripStartDate === "string" ? payload.tripStartDate : null,
+  };
+};
+
+const mapQuoteExportRow = (
+  row: Database["public"]["Tables"]["quote_exports"]["Row"],
+): QuoteExport => ({
+  activeQuoteVersion: row.active_quote_version,
+  createdAt: row.created_at,
+  fileName: row.file_name,
+  fileSizeBytes: row.file_size_bytes,
+  id: row.id,
+  mimeType: row.mime_type,
+  quoteSessionId: row.quote_session_id,
+  snapshotId: row.snapshot_id,
+  storageBucket: row.storage_bucket,
+  storagePath: row.storage_path,
 });
 
 const mapOptionRow = (
@@ -500,6 +556,99 @@ export const createSupabaseQuoteRepository = (
 
     return mapAuditEventRow(
       data as Database["public"]["Tables"]["audit_events"]["Row"],
+    );
+  },
+  async createQuoteExportSnapshot(snapshot) {
+    const { data, error } = await client
+      .from("quote_context_snapshots")
+      .insert({
+        payload: {
+          ...snapshot,
+          kind: "quote_export_snapshot",
+        } as Json,
+        quote_session_id: snapshot.quoteSessionId,
+        summary: snapshot.summary,
+      })
+      .select("*")
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    const createdSnapshot = mapQuoteExportSnapshotRow(
+      data as Database["public"]["Tables"]["quote_context_snapshots"]["Row"],
+    );
+
+    if (!createdSnapshot) {
+      throw new Error("quote_export_snapshot_invalid");
+    }
+
+    return createdSnapshot;
+  },
+  async createQuoteExport(quoteExport) {
+    const { data, error } = await client
+      .from("quote_exports")
+      .insert({
+        active_quote_version: quoteExport.activeQuoteVersion,
+        file_name: quoteExport.fileName,
+        file_size_bytes: quoteExport.fileSizeBytes,
+        id: quoteExport.id,
+        mime_type: quoteExport.mimeType,
+        quote_session_id: quoteExport.quoteSessionId,
+        snapshot_id: quoteExport.snapshotId,
+        storage_bucket: quoteExport.storageBucket,
+        storage_path: quoteExport.storagePath,
+      })
+      .select("*")
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return mapQuoteExportRow(
+      data as Database["public"]["Tables"]["quote_exports"]["Row"],
+    );
+  },
+  async getQuoteExport(quoteSessionId, exportId) {
+    const { data, error } = await client
+      .from("quote_exports")
+      .select("*")
+      .eq("id", exportId)
+      .eq("quote_session_id", quoteSessionId)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    return mapQuoteExportRow(
+      data as Database["public"]["Tables"]["quote_exports"]["Row"],
+    );
+  },
+  async getQuoteExportSnapshot(quoteSessionId, snapshotId) {
+    const { data, error } = await client
+      .from("quote_context_snapshots")
+      .select("*")
+      .eq("id", snapshotId)
+      .eq("quote_session_id", quoteSessionId)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    return mapQuoteExportSnapshotRow(
+      data as Database["public"]["Tables"]["quote_context_snapshots"]["Row"],
     );
   },
 });

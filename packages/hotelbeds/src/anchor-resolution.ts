@@ -23,6 +23,12 @@ export type ResolvedDestinationAnchor = {
   hotelDestinationCode: string;
 };
 
+export type ResolvedTransferPropertyAnchor = {
+  code: string;
+  label: string;
+  type: string;
+};
+
 const destinationRegistry: DestinationAnchorConfig[] = [
   {
     activityDestinationCode: "BCN",
@@ -216,6 +222,41 @@ export const extractSupportedDestinationKey = (text: string) =>
     destination: text,
     raw: text,
   })?.canonicalKey ?? "";
+
+export const resolveTransferPropertyAnchor = (input: {
+  destination?: string | null;
+  hotelCode?: string | null;
+  hotelName?: string | null;
+  raw?: string | null;
+}): ResolvedTransferPropertyAnchor | null => {
+  const config = findDestinationConfig(
+    input.destination ?? input.hotelName ?? "",
+    `${input.raw ?? ""} ${input.hotelName ?? ""}`.trim(),
+  );
+
+  if (!config) {
+    return null;
+  }
+
+  const hotelCode = getStringField(input.hotelCode);
+  const exactCodeMatch = hotelCode
+    ? config.transferLocations.find((anchor) => anchor.code === hotelCode)
+    : null;
+  const namedMatch = input.hotelName
+    ? findAnchorMatch(input.hotelName, config.transferLocations)?.anchor
+    : null;
+  const anchor = exactCodeMatch ?? namedMatch;
+
+  if (!anchor) {
+    return null;
+  }
+
+  return {
+    code: anchor.code,
+    label: anchor.label,
+    type: anchor.type,
+  };
+};
 
 const findAnchorMatch = (text: string, anchors: TransferAnchor[]) => {
   const normalizedText = normalizeText(text);

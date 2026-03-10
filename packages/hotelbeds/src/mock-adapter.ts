@@ -3,17 +3,18 @@ import { createId } from "@alana/shared";
 
 import type { HotelbedsSearchAdapter } from "./contracts";
 
-const baseOptions = (
-  serviceLine: ServiceLine,
-  destination: string,
-): NormalizedOption[] => [
-  {
+const baseOptions = (serviceLine: ServiceLine, destination: string) => {
+  const isMajorcaHotel =
+    serviceLine === "hotel" && destination.toLowerCase() === "majorca";
+  const firstOption: NormalizedOption = {
     id: createId(),
     serviceLine,
     destination,
     title:
       serviceLine === "hotel"
-        ? `Hotel ${destination} Grand`
+        ? isMajorcaHotel
+          ? "HM Jaime III"
+          : `Hotel ${destination} Grand`
         : serviceLine === "transfer"
           ? `Private ${destination} transfer`
           : `${destination} signature activity`,
@@ -41,9 +42,16 @@ const baseOptions = (
     supplierMetadata: {
       source: "hotelbeds_mock",
       rateKey: `opaque_${createId()}`,
+      ...(isMajorcaHotel
+        ? {
+            transferPropertyCode: "265",
+            transferPropertyLabel: "HM Jaime III",
+            transferPropertyType: "ATLAS",
+          }
+        : {}),
     },
-  },
-  {
+  };
+  const secondOption: NormalizedOption = {
     id: createId(),
     serviceLine,
     destination,
@@ -70,8 +78,10 @@ const baseOptions = (
       source: "hotelbeds_mock",
       rateKey: `opaque_${createId()}`,
     },
-  },
-];
+  };
+
+  return [firstOption, secondOption];
+};
 
 export const createMockHotelbedsAdapter = (): HotelbedsSearchAdapter => ({
   async search(intake, serviceLine) {

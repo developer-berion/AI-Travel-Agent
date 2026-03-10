@@ -3,11 +3,15 @@ import {
   type QuoteRepository,
   buildBundleReviewView,
   buildContextPackage,
+  buildQuoteExportSnapshot,
   updateSessionMeta,
 } from "@alana/database";
 import {
+  type NormalizedOption,
   type QuoteCommandEnvelope,
   type QuoteCommandResult,
+  type QuoteExport,
+  type QuoteExportSnapshot,
   type ServiceLine,
   assertCommandAllowed,
 } from "@alana/domain";
@@ -15,6 +19,7 @@ import type { HotelbedsSearchAdapter } from "@alana/hotelbeds";
 import {
   createMockHotelbedsAdapter,
   enrichStructuredIntakeWithHotelbedsAnchors,
+  resolveTransferPropertyAnchor,
 } from "@alana/hotelbeds";
 import { createId, nowIso } from "@alana/shared";
 
@@ -126,14 +131,123 @@ const findShortlistOption = (record: QuoteRecord, optionId: string) =>
     .flatMap((shortlist) => shortlist.items)
     .find((option) => option.id === optionId);
 
+const getSupplierMetadataString = (option: NormalizedOption, key: string) => {
+  const value = option.supplierMetadata[key];
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
+};
+
+const buildShortlistFromSearchResult = (
+  quoteSessionId: string,
+  result: Awaited<ReturnType<HotelbedsSearchAdapter["search"]>>,
+) => ({
+  id: createId(),
+  items: result.options,
+  quoteSessionId,
+  reason: result.warning ?? result.error?.message ?? null,
+  serviceLine: result.serviceLine,
+  weakShortlist: result.weakShortlist,
+});
+
+const upsertShortlist = (
+  record: QuoteRecord,
+  shortlist: ReturnType<typeof buildShortlistFromSearchResult>,
+) => {
+  record.shortlists = [
+    ...record.shortlists.filter(
+      (candidate) => candidate.serviceLine !== shortlist.serviceLine,
+    ),
+    shortlist,
+  ];
+};
+
+const syncSelectedHotelIntoIntake = (
+  intake: QuoteRecord["intake"],
+  selectedOption: NormalizedOption,
+) => {
+  if (!intake || selectedOption.serviceLine !== "hotel") {
+    return intake;
+  }
+
+  const {
+    transferFromCode: _transferFromCode,
+    transferFromLabel: _transferFromLabel,
+    transferFromType: _transferFromType,
+    transferPropertyCode: _transferPropertyCode,
+    transferPropertyLabel: _transferPropertyLabel,
+    transferPropertyType: _transferPropertyType,
+    transferToCode: _transferToCode,
+    transferToLabel: _transferToLabel,
+    transferToType: _transferToType,
+    ...remainingFields
+  } = intake.extractedFields;
+  const nextFields = {
+    ...remainingFields,
+  };
+  const directTransferPropertyCode = getSupplierMetadataString(
+    selectedOption,
+    "transferPropertyCode",
+  );
+  const directTransferPropertyType = getSupplierMetadataString(
+    selectedOption,
+    "transferPropertyType",
+  );
+  const directTransferProperty =
+    directTransferPropertyCode && directTransferPropertyType
+      ? {
+          code: directTransferPropertyCode,
+          label:
+            getSupplierMetadataString(
+              selectedOption,
+              "transferPropertyLabel",
+            ) ?? selectedOption.title,
+          type: directTransferPropertyType,
+        }
+      : null;
+  const resolvedTransferProperty =
+    directTransferProperty ??
+    resolveTransferPropertyAnchor({
+      destination: selectedOption.destination,
+      hotelCode: getSupplierMetadataString(selectedOption, "hotelCode"),
+      hotelName: selectedOption.title,
+    });
+
+  nextFields.selectedHotelTitle = selectedOption.title;
+  nextFields.selectedHotelCode =
+    getSupplierMetadataString(selectedOption, "hotelCode") ?? "";
+
+  if (resolvedTransferProperty) {
+    nextFields.transferPropertyCode = resolvedTransferProperty.code;
+    nextFields.transferPropertyLabel = resolvedTransferProperty.label;
+    nextFields.transferPropertyType = resolvedTransferProperty.type;
+  }
+
+  return enrichStructuredIntakeWithHotelbedsAnchors({
+    ...intake,
+    extractedFields: nextFields,
+  });
+};
+
 const buildBundleSummary = (record: QuoteRecord) => {
   const bundleReview = buildBundleReviewView(record);
+  const intake = record.intake;
+  const hasBlockedServiceLine = intake
+    ? intake.requestedServiceLines.some(
+        (serviceLine) =>
+          intake.readinessByServiceLine[serviceLine] === "blocked",
+      )
+    : false;
 
   if (!bundleReview) {
     return {
       bundleReview: null,
-      nextAction: "bundle_blocked" as const,
-      targetState: "reviewing" as const,
+      nextAction: hasBlockedServiceLine
+        ? ("await_clarification_answer" as const)
+        : ("bundle_blocked" as const),
+      targetState: hasBlockedServiceLine
+        ? ("clarifying" as const)
+        : ("reviewing" as const),
       summary: "Todavia no existe una seleccion para bundle review.",
     };
   }
@@ -147,6 +261,17 @@ const buildBundleSummary = (record: QuoteRecord) => {
     };
   }
 
+  if (hasBlockedServiceLine) {
+    return {
+      bundleReview,
+      nextAction: "await_clarification_answer" as const,
+      targetState: "clarifying" as const,
+      summary:
+        bundleReview.blockers[0] ??
+        "El bundle sigue bloqueado porque todavia falta resolver un servicio.",
+    };
+  }
+
   return {
     bundleReview,
     nextAction: "bundle_blocked" as const,
@@ -157,23 +282,95 @@ const buildBundleSummary = (record: QuoteRecord) => {
   };
 };
 
+const sanitizeFileNameSegment = (value: string) => {
+  const sanitized = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return sanitized.length > 0 ? sanitized : "quote";
+};
+
+const buildQuotePdfFileName = (snapshot: QuoteExportSnapshot) =>
+  `${sanitizeFileNameSegment(snapshot.tripLabel || snapshot.title)}-v${snapshot.activeQuoteVersion}.pdf`;
+
+export type QuotePdfRenderer = {
+  render(snapshot: QuoteExportSnapshot): Promise<Uint8Array> | Uint8Array;
+};
+
+export type QuoteExportStorageWriter = {
+  storeFile(input: {
+    bytes: Uint8Array;
+    exportId: string;
+    fileName: string;
+    mimeType: string;
+    quoteSessionId: string;
+  }):
+    | Promise<
+        Pick<
+          QuoteExport,
+          | "fileName"
+          | "fileSizeBytes"
+          | "mimeType"
+          | "storageBucket"
+          | "storagePath"
+        >
+      >
+    | Pick<
+        QuoteExport,
+        | "fileName"
+        | "fileSizeBytes"
+        | "mimeType"
+        | "storageBucket"
+        | "storagePath"
+      >;
+};
+
+const createFallbackQuotePdfRenderer = (): QuotePdfRenderer => ({
+  render(snapshot) {
+    return new TextEncoder().encode(
+      `%PDF-1.4\n% Alana mock export\n${snapshot.summary}\n`,
+    );
+  },
+});
+
+const createFallbackQuoteExportStorage = (): QuoteExportStorageWriter => ({
+  storeFile(input) {
+    return {
+      fileName: input.fileName,
+      fileSizeBytes: input.bytes.byteLength,
+      mimeType: input.mimeType,
+      storageBucket: "quote-exports",
+      storagePath: `quote-sessions/${input.quoteSessionId}/exports/${input.exportId}/${input.fileName}`,
+    };
+  },
+});
+
 export const createQuoteCommandRunner = (dependencies?: {
   aiRuntime?: QuoteAiRuntime;
   hotelbedsAdapter?: HotelbedsSearchAdapter;
+  quoteExportStorage?: QuoteExportStorageWriter;
+  quotePdfRenderer?: QuotePdfRenderer;
 }) => {
   const aiRuntime = dependencies?.aiRuntime ?? createMockAiRuntime();
   const hotelbedsAdapter =
     dependencies?.hotelbedsAdapter ?? createMockHotelbedsAdapter();
+  const quotePdfRenderer =
+    dependencies?.quotePdfRenderer ?? createFallbackQuotePdfRenderer();
+  const quoteExportStorage =
+    dependencies?.quoteExportStorage ?? createFallbackQuoteExportStorage();
 
   return async (
     repository: QuoteRepository,
     envelope: QuoteCommandEnvelope,
   ): Promise<QuoteCommandResult> => {
-    const record = await repository.getRecord(envelope.quoteSessionId);
+    let record = await repository.getRecord(envelope.quoteSessionId);
 
     if (!record) {
       throw new Error("quote_session_not_found");
     }
+
+    const quoteSessionId = record.session.id;
 
     if (!assertCommandAllowed(record.session.status, envelope.commandName)) {
       throw new Error("quote_command_not_allowed");
@@ -188,7 +385,7 @@ export const createQuoteCommandRunner = (dependencies?: {
       payload: Record<string, string | number | boolean | null>,
     ) => {
       const event = await repository.appendAuditEvent({
-        quoteSessionId: record.session.id,
+        quoteSessionId,
         eventName,
         payload,
       });
@@ -328,14 +525,9 @@ export const createQuoteCommandRunner = (dependencies?: {
       );
 
       record.selectedItems = [];
-      record.shortlists = results.map((result) => ({
-        id: createId(),
-        items: result.options,
-        quoteSessionId: record.session.id,
-        reason: result.warning ?? result.error?.message ?? null,
-        serviceLine: result.serviceLine,
-        weakShortlist: result.weakShortlist,
-      }));
+      record.shortlists = results.map((result) =>
+        buildShortlistFromSearchResult(quoteSessionId, result),
+      );
 
       const hasWeakShortlist = results.some((result) => result.weakShortlist);
       const hasNoResults = results.some(
@@ -428,18 +620,104 @@ export const createQuoteCommandRunner = (dependencies?: {
         selectedOption,
       ];
 
+      if (
+        selectedOption.serviceLine === "hotel" &&
+        record.intake?.requestedServiceLines.includes("transfer")
+      ) {
+        const nextIntake = syncSelectedHotelIntoIntake(
+          record.intake,
+          selectedOption,
+        );
+        const blockedServiceLinesAfterSelection =
+          nextIntake?.requestedServiceLines.filter(
+            (serviceLine) =>
+              nextIntake.readinessByServiceLine[serviceLine] === "blocked",
+          ) ?? [];
+        const nextTransferReadiness =
+          nextIntake?.readinessByServiceLine.transfer;
+        const transferReady = Boolean(
+          nextIntake?.requestedServiceLines.includes("transfer") &&
+            nextTransferReadiness === "ready",
+        );
+        const shouldRefreshTransfer =
+          transferReady &&
+          (hasSelectionChanged ||
+            !record.shortlists.some(
+              (shortlist) => shortlist.serviceLine === "transfer",
+            ));
+
+        record.intake = nextIntake;
+
+        if (hasSelectionChanged) {
+          record.selectedItems = record.selectedItems.filter(
+            (item) => item.serviceLine !== "transfer",
+          );
+          record.shortlists = record.shortlists.filter(
+            (shortlist) => shortlist.serviceLine !== "transfer",
+          );
+        }
+
+        await pushAudit("readiness_validated", {
+          blockerCount: blockedServiceLinesAfterSelection.length,
+          ready: blockedServiceLinesAfterSelection.length === 0,
+        });
+
+        if (blockedServiceLinesAfterSelection.length > 0) {
+          await pushAudit("fallback_triggered", {
+            blockedServices: blockedServiceLinesAfterSelection.join(","),
+            reason: "supplier_anchor_resolution",
+          });
+        }
+
+        if (shouldRefreshTransfer && nextIntake) {
+          const transferSearchResult = await hotelbedsAdapter.search(
+            nextIntake,
+            "transfer",
+          );
+
+          upsertShortlist(
+            record,
+            buildShortlistFromSearchResult(
+              quoteSessionId,
+              transferSearchResult,
+            ),
+          );
+          await pushAudit("search_execution_completed", {
+            services: 1,
+            weakShortlist: transferSearchResult.weakShortlist,
+          });
+          await pushAudit("shortlist_created", {
+            shortlistCount: record.shortlists.length,
+          });
+
+          if (transferSearchResult.error) {
+            await pushAudit("fallback_triggered", {
+              blockedServices: "transfer",
+              reason: transferSearchResult.error.code,
+            });
+          }
+        }
+      }
+
       const bundleSummary = buildBundleSummary(record);
+      const nextPendingQuestion =
+        bundleSummary.targetState === "clarifying"
+          ? getSupplierAnchorQuestion(record)
+          : null;
+
       record.session = updateSessionMeta(record.session, {
         activeQuoteVersion: hasSelectionChanged
           ? record.session.activeQuoteVersion + 1
           : record.session.activeQuoteVersion,
         latestContextSummary: bundleSummary.summary,
-        pendingQuestion: null,
+        pendingQuestion: nextPendingQuestion,
         status: bundleSummary.targetState,
       });
       await repository.saveRecord(record);
       await pushAudit("cart_item_selected", {
         exportReady: bundleSummary.bundleReview?.isExportReady ?? false,
+        invalidatedTransferSelection:
+          selectedOption.serviceLine === "hotel" && hasSelectionChanged,
         optionChanged: hasSelectionChanged,
         optionId: selectedOption.id,
         serviceLine: selectedOption.serviceLine,
@@ -482,10 +760,14 @@ export const createQuoteCommandRunner = (dependencies?: {
       );
 
       const bundleSummary = buildBundleSummary(record);
+      const nextPendingQuestion =
+        bundleSummary.targetState === "clarifying"
+          ? getSupplierAnchorQuestion(record)
+          : null;
       record.session = updateSessionMeta(record.session, {
         activeQuoteVersion: record.session.activeQuoteVersion + 1,
         latestContextSummary: bundleSummary.summary,
-        pendingQuestion: null,
+        pendingQuestion: nextPendingQuestion,
         status: bundleSummary.targetState,
       });
       await repository.saveRecord(record);
@@ -515,9 +797,13 @@ export const createQuoteCommandRunner = (dependencies?: {
 
     if (envelope.commandName === "refresh_bundle_review") {
       const bundleSummary = buildBundleSummary(record);
+      const nextPendingQuestion =
+        bundleSummary.targetState === "clarifying"
+          ? getSupplierAnchorQuestion(record)
+          : null;
       record.session = updateSessionMeta(record.session, {
         latestContextSummary: bundleSummary.summary,
-        pendingQuestion: null,
+        pendingQuestion: nextPendingQuestion,
         status: bundleSummary.targetState,
       });
       await repository.saveRecord(record);
@@ -537,6 +823,66 @@ export const createQuoteCommandRunner = (dependencies?: {
           bundleReview: bundleSummary.bundleReview,
           contextPackage: buildContextPackage(record),
           selectedItems: record.selectedItems,
+        },
+      };
+    }
+
+    if (envelope.commandName === "generate_quote_pdf") {
+      const exportSnapshotInput = buildQuoteExportSnapshot(record);
+      const exportSummary = `Quote export v${record.session.activeQuoteVersion} generado desde bundle review estable.`;
+
+      if (!exportSnapshotInput) {
+        throw new Error("quote_export_not_ready");
+      }
+
+      const exportSnapshot = await repository.createQuoteExportSnapshot({
+        ...exportSnapshotInput,
+        confirmedStateSummary: exportSummary,
+        status: "exported",
+      });
+      const exportId = createId();
+      const storedFile = await quoteExportStorage.storeFile({
+        bytes: await quotePdfRenderer.render(exportSnapshot),
+        exportId,
+        fileName: buildQuotePdfFileName(exportSnapshot),
+        mimeType: "application/pdf",
+        quoteSessionId: record.session.id,
+      });
+      const quoteExport = await repository.createQuoteExport({
+        activeQuoteVersion: exportSnapshot.activeQuoteVersion,
+        id: exportId,
+        quoteSessionId: record.session.id,
+        snapshotId: exportSnapshot.id,
+        ...storedFile,
+      });
+
+      record.session = updateSessionMeta(record.session, {
+        latestContextSummary: exportSummary,
+        pendingQuestion: null,
+        status: "exported",
+      });
+      record = await repository.saveRecord(record);
+
+      await pushAudit("quote_export_generated", {
+        activeQuoteVersion: quoteExport.activeQuoteVersion,
+        exportId: quoteExport.id,
+        snapshotId: exportSnapshot.id,
+        selectedItems: exportSnapshot.selectedItems.length,
+      });
+
+      return {
+        auditEventIds,
+        commandId: envelope.commandId,
+        nextAction: "await_operator_input",
+        quoteSessionId: record.session.id,
+        sessionStateVersion: record.session.activeQuoteVersion,
+        viewModelDelta: {
+          contextPackage: buildContextPackage(record),
+          exportId: quoteExport.id,
+          exportPath: `/quotes/${record.session.id}/export/${quoteExport.id}`,
+          exportSnapshot,
+          pdfPath: `/api/quote-sessions/${record.session.id}/exports/${quoteExport.id}/pdf`,
+          quoteExport,
         },
       };
     }

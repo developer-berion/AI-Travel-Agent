@@ -164,6 +164,37 @@ export type ContextPackage = {
   bundleReview: BundleReviewView | null;
 };
 
+export type QuoteExportSnapshot = {
+  id: string;
+  quoteSessionId: string;
+  summary: string;
+  createdAt: string;
+  title: string;
+  agencyName: string;
+  tripLabel: string;
+  tripStartDate: string | null;
+  status: QuoteSessionState;
+  commercialStatus: CommercialStatus;
+  recommendationMode: RecommendationMode;
+  activeQuoteVersion: number;
+  confirmedStateSummary: string;
+  selectedItems: NormalizedOption[];
+  bundleReview: BundleReviewView;
+};
+
+export type QuoteExport = {
+  id: string;
+  quoteSessionId: string;
+  snapshotId: string;
+  activeQuoteVersion: number;
+  fileName: string;
+  mimeType: string;
+  storageBucket: string;
+  storagePath: string;
+  fileSizeBytes: number;
+  createdAt: string;
+};
+
 export type AuditEvent = {
   id: string;
   quoteSessionId: string;
@@ -180,6 +211,7 @@ export type AuditEvent = {
     | "cart_item_selected"
     | "cart_item_removed"
     | "bundle_review_refreshed"
+    | "quote_export_generated"
     | "quote_session_archived";
   createdAt: string;
   payload: Record<string, string | number | boolean | null>;
@@ -223,7 +255,7 @@ export type QuoteCommandResult = {
 
 const stateTransitions: Record<QuoteSessionState, QuoteSessionState[]> = {
   draft: ["clarifying", "searching", "archived"],
-  clarifying: ["clarifying", "searching", "archived"],
+  clarifying: ["clarifying", "searching", "reviewing", "archived"],
   searching: ["clarifying", "reviewing", "escalated", "archived"],
   reviewing: ["searching", "clarifying", "export_ready", "closed", "archived"],
   export_ready: ["exported", "reviewing", "archived"],
@@ -244,6 +276,10 @@ export const getAllowedCommands = (state: QuoteSessionState) => {
     clarifying: [
       "submit_clarification_answer",
       "append_operator_message",
+      "select_option_for_cart",
+      "replace_cart_item",
+      "remove_cart_item",
+      "refresh_bundle_review",
       "archive_quote_session",
     ],
     searching: [

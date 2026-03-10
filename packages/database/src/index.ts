@@ -1,6 +1,7 @@
 export {
   buildBundleReviewView,
   buildContextPackage,
+  buildQuoteExportSnapshot,
   commercialStatusLabels,
   createSessionTitle,
   quoteStateLabels,

@@ -3,6 +3,8 @@ import type {
   BundleReviewView,
   ContextPackage,
   NormalizedOption,
+  QuoteExport,
+  QuoteExportSnapshot,
   QuoteMessage,
   QuoteSession,
   Shortlist,
@@ -37,6 +39,20 @@ export type QuoteRepository = {
   appendAuditEvent(
     event: Omit<AuditEvent, "id" | "createdAt">,
   ): Promise<AuditEvent> | AuditEvent;
+  createQuoteExportSnapshot(
+    snapshot: Omit<QuoteExportSnapshot, "createdAt" | "id">,
+  ): Promise<QuoteExportSnapshot> | QuoteExportSnapshot;
+  createQuoteExport(
+    quoteExport: Omit<QuoteExport, "createdAt">,
+  ): Promise<QuoteExport> | QuoteExport;
+  getQuoteExport(
+    quoteSessionId: string,
+    exportId: string,
+  ): Promise<QuoteExport | null> | QuoteExport | null;
+  getQuoteExportSnapshot(
+    quoteSessionId: string,
+    snapshotId: string,
+  ): Promise<QuoteExportSnapshot | null> | QuoteExportSnapshot | null;
 };
 
 export const buildContextPackage = (record: QuoteRecord): ContextPackage => ({
@@ -84,25 +100,50 @@ const buildBundleWarnings = (
   return [...warnings];
 };
 
+const getServiceLineBundleBlocker = (
+  record: QuoteRecord,
+  serviceLine: string,
+): string => {
+  const shortlist = record.shortlists.find(
+    (candidate) => candidate.serviceLine === serviceLine,
+  );
+
+  if (shortlist && shortlist.items.length === 0 && shortlist.reason) {
+    return shortlist.reason;
+  }
+
+  const readinessNote =
+    record.intake?.extractedFields?.[`${serviceLine}ReadinessNote`];
+  const normalizedServiceLine = serviceLine;
+
+  if (typeof readinessNote === "string" && readinessNote.trim().length > 0) {
+    return readinessNote.trim();
+  }
+
+  return `Selecciona una opcion de ${normalizedServiceLine} para cerrar el bundle.`;
+};
+
 export const buildBundleReviewView = (
   record: QuoteRecord,
 ): BundleReviewView | null => {
   const selectedItems = record.selectedItems;
+  const requestedServiceLines = record.intake?.requestedServiceLines ?? [];
   const shortlistServiceLines = [
     ...new Set(record.shortlists.map((shortlist) => shortlist.serviceLine)),
   ];
+  const bundleServiceLines = [
+    ...new Set([...requestedServiceLines, ...shortlistServiceLines]),
+  ];
 
-  if (shortlistServiceLines.length === 0 && selectedItems.length === 0) {
+  if (bundleServiceLines.length === 0 && selectedItems.length === 0) {
     return null;
   }
 
   const blockers: string[] = [];
 
-  for (const serviceLine of shortlistServiceLines) {
+  for (const serviceLine of bundleServiceLines) {
     if (!selectedItems.some((item) => item.serviceLine === serviceLine)) {
-      blockers.push(
-        `Selecciona una opcion de ${serviceLine} para cerrar el bundle.`,
-      );
+      blockers.push(getServiceLineBundleBlocker(record, serviceLine));
     }
   }
 
@@ -127,6 +168,32 @@ export const buildBundleReviewView = (
     totalPrice,
     currency: currencies[0] ?? "",
     activeQuoteVersion: record.session.activeQuoteVersion,
+  };
+};
+
+export const buildQuoteExportSnapshot = (
+  record: QuoteRecord,
+): Omit<QuoteExportSnapshot, "createdAt" | "id"> | null => {
+  const bundleReview = buildBundleReviewView(record);
+
+  if (!bundleReview?.isExportReady) {
+    return null;
+  }
+
+  return {
+    activeQuoteVersion: record.session.activeQuoteVersion,
+    agencyName: record.session.agencyName,
+    bundleReview,
+    commercialStatus: record.session.commercialStatus,
+    confirmedStateSummary: record.session.latestContextSummary,
+    quoteSessionId: record.session.id,
+    recommendationMode: record.session.recommendationMode,
+    selectedItems: bundleReview.selectedItems,
+    status: record.session.status,
+    summary: `Quote export v${record.session.activeQuoteVersion} for ${record.session.tripLabel}`,
+    title: record.session.title,
+    tripLabel: record.session.tripLabel,
+    tripStartDate: record.session.tripStartDate,
   };
 };
 
