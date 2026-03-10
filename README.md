@@ -151,4 +151,9 @@ Lo que ya quedo activo:
 Notas operativas vigentes:
 
 - GitHub queda publico por decision de plan gratuito.
-- El camino de despliegue verificado para esta wave sigue siendo `manual deploy + smoke`.
+- `Vercel for Git` ya esta conectado al repo `developer-berion/AI-Travel-Agent`.
+- `Require Verified Commits` esta habilitado en Vercel; los commits locales sin firma verificada disparan el webhook Git pero el preview queda cancelado antes de build.
+- El camino verificado para release sigue siendo:
+  - preview por PR/branch con commits verificados
+  - merge a `main` via PR
+  - `manual deploy + smoke` como fallback operativo si la firma verificada no esta disponible desde el entorno local

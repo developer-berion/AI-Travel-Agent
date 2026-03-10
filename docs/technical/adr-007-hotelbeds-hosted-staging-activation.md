@@ -30,6 +30,8 @@ Eso dejaba una brecha operativa:
 
 - El staging hosted ya valida el circuito real `Supabase -> Alana API -> Hotelbeds` para casos soportados por anchors supplier-ready.
 - `Hotelbeds` deja de estar probado solo a nivel de conectividad y pasa a estar probado a nivel de journey operador.
+- `Vercel for Git` queda conectado al repo `developer-berion/AI-Travel-Agent`, pero el proyecto exige `Require Verified Commits`.
+- Como resultado, un push local sin firma verificada puede crear el deployment Git y aun asi quedar `Canceled` antes de build.
 - La activacion sigue siendo deliberadamente acotada:
   - destinos soportados por el registry curado
   - `transfer` solo con pickup/dropoff supplier-ready
@@ -44,6 +46,8 @@ Eso dejaba una brecha operativa:
 - `pnpm staging:hotelbeds:smoke` paso en hosted con:
   - resultados supplier-backed para hotel, activity y transfer
   - fallback parcial honesto cuando `transfer` queda bloqueado
+- `vercel git connect` ya responde que `developer-berion/AI-Travel-Agent` esta conectado al proyecto.
+- Un push de prueba en `codex/vercel-preview-check` creo el deployment preview Git-backed, pero quedo cancelado porque el commit estaba `unsigned`.
 
 ## Siguiente paso tecnico
 
