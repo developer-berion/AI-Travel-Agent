@@ -3,6 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { runQuoteCommandRequest } from "@/lib/quote-command-client";
+
+import { TransientFailureNotice } from "./transient-failure-notice";
+
 export const ExportQuoteButton = ({
   quoteSessionId,
 }: {
@@ -16,51 +20,48 @@ export const ExportQuoteButton = ({
     setError(null);
     setIsSubmitting(true);
 
-    const response = await fetch(
-      `/api/quote-sessions/${quoteSessionId}/commands`,
-      {
-        body: JSON.stringify({
-          commandName: "generate_quote_pdf",
-          payload: {},
-        }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-      },
-    );
-
-    const payload = (await response.json()) as {
-      error?: string;
-      viewModelDelta?: {
-        exportId?: string;
+    try {
+      const payload = (await runQuoteCommandRequest({
+        quoteSessionId,
+        commandName: "generate_quote_pdf",
+      })) as {
+        viewModelDelta?: {
+          exportId?: string;
+        };
       };
-    };
 
-    setIsSubmitting(false);
+      if (!payload.viewModelDelta?.exportId) {
+        throw new Error("No se pudo generar el export.");
+      }
 
-    if (!response.ok || !payload.viewModelDelta?.exportId) {
-      setError(payload.error ?? "No se pudo generar el export.");
-      return;
+      router.push(
+        `/quotes/${quoteSessionId}/export/${payload.viewModelDelta.exportId}`,
+      );
+      router.refresh();
+    } catch (commandError) {
+      setError(
+        commandError instanceof Error
+          ? commandError.message
+          : "No se pudo generar el export.",
+      );
+    } finally {
+      setIsSubmitting(false);
     }
-
-    router.push(
-      `/quotes/${quoteSessionId}/export/${payload.viewModelDelta.exportId}`,
-    );
-    router.refresh();
   };
 
   return (
-    <div className="card-actions">
+    <div className="command-button-stack">
       <button
         className="primary-button"
         disabled={isSubmitting}
         onClick={generateExport}
         type="button"
       >
-        {isSubmitting ? "Generating PDF..." : "Generate PDF export"}
+        {isSubmitting ? "Generando propuesta..." : "Exportar propuesta PDF"}
       </button>
-      {error ? <p className="muted">{error}</p> : null}
+      {error ? (
+        <TransientFailureNotice error={error} onRetry={generateExport} />
+      ) : null}
     </div>
   );
 };

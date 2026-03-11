@@ -1,20 +1,44 @@
 "use client";
 
+import type { ServiceLine } from "@alana/domain";
 import { create } from "zustand";
 
 type CompareState = {
+  selectedServiceLine: ServiceLine | null;
   selectedOptionIds: string[];
-  toggleOption: (optionId: string) => void;
+  setSelectedServiceLine: (serviceLine: ServiceLine | null) => void;
+  toggleOption: (optionId: string, serviceLine: ServiceLine) => void;
   clear: () => void;
 };
 
 export const useCompareStore = create<CompareState>((set) => ({
+  selectedServiceLine: null,
   selectedOptionIds: [],
-  toggleOption: (optionId) =>
-    set((state) => ({
-      selectedOptionIds: state.selectedOptionIds.includes(optionId)
-        ? state.selectedOptionIds.filter((id) => id !== optionId)
-        : [...state.selectedOptionIds, optionId].slice(-3),
+  setSelectedServiceLine: (selectedServiceLine) =>
+    set(() => ({
+      selectedOptionIds: [],
+      selectedServiceLine,
     })),
-  clear: () => set({ selectedOptionIds: [] }),
+  toggleOption: (optionId, serviceLine) =>
+    set((state) => {
+      if (
+        state.selectedServiceLine &&
+        state.selectedServiceLine !== serviceLine
+      ) {
+        return {
+          selectedOptionIds: [optionId],
+          selectedServiceLine: serviceLine,
+        };
+      }
+
+      const selectedOptionIds = state.selectedOptionIds.includes(optionId)
+        ? state.selectedOptionIds.filter((id) => id !== optionId)
+        : [...state.selectedOptionIds, optionId].slice(-5);
+
+      return {
+        selectedOptionIds,
+        selectedServiceLine: selectedOptionIds.length > 0 ? serviceLine : null,
+      };
+    }),
+  clear: () => set({ selectedOptionIds: [], selectedServiceLine: null }),
 }));

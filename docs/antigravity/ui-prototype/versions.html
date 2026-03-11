@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es" class="antialiased">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alana AI - Historial de Versiones</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            primary: {
+              DEFAULT: '#8A5A9E',
+              hover: '#7A4A8E',
+              soft: '#F4F0F6',
+              darkSoft: '#2D2034',
+              text: '#6A3A7E'
+            },
+            pastel: {
+              red: '#FFE5E5',
+              redText: '#D94040',
+              yellow: '#FFF3CD',
+              yellowText: '#D99A2B',
+              green: '#E5F6DF',
+              greenText: '#4A9B3E',
+              blue: '#E5F0FF',
+              blueText: '#3A7BD5'
+            },
+            dark: {
+              bg: '#121212',
+              surface: '#1E1E1E',
+              border: '#2A2A2A',
+              text: '#E0E0E0',
+              muted: '#888888'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 4px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; }
+  </style>
+</head>
+<body class="bg-[#fafafa] dark:bg-dark-bg text-gray-800 dark:text-gray-200 transition-colors duration-200 h-screen flex flex-col overflow-hidden">
+
+  <!-- Header -->
+  <header class="h-16 flex items-center justify-between px-8 bg-white dark:bg-dark-surface border-b border-gray-100 dark:border-dark-border z-10 shrink-0">
+    <div class="flex items-center gap-4">
+      <a href="workspace.html" class="w-8 h-8 rounded-xl hover:bg-gray-50 dark:hover:bg-[#2d2d2d] flex items-center justify-center text-gray-400 transition-colors" title="Volver al Inbox">
+        <i class="ph-light ph-arrow-left text-xl"></i>
+      </a>
+      <div class="h-4 w-px bg-gray-200 dark:bg-dark-border"></div>
+      <div>
+        <h1 class="text-xl font-medium text-gray-800 dark:text-gray-100">Historial de Cotizaciones</h1>
+        <div class="text-[13px] text-gray-500 dark:text-dark-muted font-light mt-0.5">Viaje a Madrid (1 May - 5 May, 2026)</div>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <button onclick="document.documentElement.classList.toggle('dark')" class="w-10 h-10 rounded-xl hover:bg-gray-50 dark:hover:bg-[#2d2d2d] flex items-center justify-center text-gray-400 transition-colors">
+        <i class="ph-light ph-moon text-xl dark:hidden"></i>
+        <i class="ph-light ph-sun text-xl hidden dark:block"></i>
+      </button>
+      <a href="index.html" class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-xl text-sm font-medium transition-all shadow-sm flex items-center gap-2">
+        <i class="ph-light ph-chat-teardrop"></i> Volver al chat
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 overflow-auto custom-scrollbar p-6 lg:p-10">
+    
+    <div class="max-w-4xl mx-auto">
+      
+      <!-- Top info -->
+      <div class="flex justify-between items-end mb-8 relative">
+        <div>
+          <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">Versiones Previas</h2>
+          <p class="text-sm font-light text-gray-400 dark:text-dark-muted mt-2">Compara los cambios en precio y servicios de cada iteración enviada al cliente.</p>
+        </div>
+        <!-- Toggle Demo -->
+        <button onclick="document.getElementById('timeline-content').classList.toggle('hidden'); document.getElementById('empty-state').classList.toggle('hidden');" class="text-[10px] bg-white hover:bg-gray-50 dark:bg-[#333] dark:hover:bg-[#444] text-gray-500 dark:text-gray-300 px-2 py-1 rounded shadow border border-gray-200 dark:border-dark-border transition-colors">Toggle Empty state</button>
+      </div>
+
+      <!-- Empty State -->
+      <div id="empty-state" class="hidden py-16 flex flex-col items-center justify-center text-center animate-fade-in">
+        <div class="w-16 h-16 rounded-full bg-gray-50 dark:bg-[#2d2d2d] border-2 border-dashed border-gray-200 dark:border-dark-border flex items-center justify-center text-gray-400 mb-4">
+          <i class="ph-light ph-clock-counter-clockwise text-3xl"></i>
+        </div>
+        <h3 class="text-lg font-medium text-gray-800 dark:text-gray-200">Aún no hay versiones generadas</h3>
+        <p class="text-sm font-light text-gray-500 dark:text-gray-400 mt-2 max-w-sm">El historial de cotizaciones se activará cuando envíes la primera versión oficial al cliente.</p>
+      </div>
+
+      <!-- Timeline -->
+      <div id="timeline-content" class="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 dark:before:via-dark-border before:to-transparent">
+        
+        <!-- Version 3 (Latest) -->
+        <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+          <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-[#fafafa] dark:border-dark-bg bg-pastel-green dark:bg-green-900 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 text-pastel-greenText dark:text-green-400">
+            <i class="ph-light ph-check-circle text-lg"></i>
+          </div>
+          
+          <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white dark:bg-dark-surface p-6 rounded-3xl border border-pastel-green/50 dark:border-green-900/30 shadow-sm relative">
+            <div class="absolute top-4 right-4">
+              <span class="inline-flex items-center bg-pastel-green/20 dark:bg-green-900/20 text-pastel-greenText dark:text-green-400 border border-pastel-green dark:border-green-900/30 px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider">
+                Actual
+              </span>
+            </div>
+            
+            <div class="flex items-center gap-2 text-sm text-gray-400 dark:text-dark-muted mb-2 font-medium">
+              <i class="ph-light ph-clock"></i> Hoy, 10:45 AM
+            </div>
+            <h3 class="text-lg font-medium text-gray-800 dark:text-white mb-1">Versión 3 - Final</h3>
+            <div class="text-[13px] text-gray-500 dark:text-gray-400 font-light mb-4">Añadido el traslado privado (SUV) en Madrid.</div>
+            
+            <div class="bg-gray-50 dark:bg-[#1a1a1a] p-4 rounded-xl border border-gray-100 dark:border-dark-border mb-4">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-medium text-gray-600 dark:text-gray-300">Total</span>
+                <span class="text-lg font-semibold text-gray-800 dark:text-white">USD 860.00</span>
+              </div>
+              <div class="text-[13px] text-pastel-greenText dark:text-green-400 flex items-center gap-1">
+                <i class="ph-light ph-trend-up"></i> + USD 80.00 vs v2
+              </div>
+            </div>
+
+            <div class="flex gap-2">
+              <a href="quote-review.html" class="flex-1 bg-primary hover:bg-primary-hover text-white text-center py-2 px-3 rounded-lg text-sm font-medium transition-colors shadow-sm">
+                Ver cotización
+              </a>
+              <button class="px-3 py-2 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-[#2d2d2d] rounded-lg text-gray-500 dark:text-gray-300 transition-colors" title="Descargar PDF original">
+                <i class="ph-light ph-download-simple text-lg"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Version 2 -->
+        <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+          <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-[#fafafa] dark:border-dark-bg bg-gray-100 dark:bg-dark-surface shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 text-gray-400">
+            <i class="ph-light ph-file-text text-lg"></i>
+          </div>
+          
+          <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white dark:bg-dark-surface p-6 rounded-3xl border border-gray-100 dark:border-dark-border hover:border-gray-200 dark:hover:border-gray-700 transition-colors shadow-sm relative opacity-70 hover:opacity-100">
+            
+            <div class="flex items-center gap-2 text-sm text-gray-400 dark:text-dark-muted mb-2 font-medium">
+              <i class="ph-light ph-clock"></i> Ayer, 16:30 PM
+            </div>
+            <h3 class="text-lg font-medium text-gray-800 dark:text-white mb-1">Versión 2 - Cambio de Hotel</h3>
+            <div class="text-[13px] text-gray-500 dark:text-gray-400 font-light mb-4">El cliente solicitó cambiar del Hotel Madrid Value al Madrid Grand.</div>
+            
+            <div class="bg-gray-50 dark:bg-[#1a1a1a] p-4 rounded-xl border border-gray-100 dark:border-dark-border mb-4">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-medium text-gray-600 dark:text-gray-300">Total</span>
+                <span class="text-lg font-semibold text-gray-800 dark:text-white">USD 780.00</span>
+              </div>
+              <div class="text-[13px] text-pastel-redText dark:text-red-400 flex items-center gap-1">
+                <i class="ph-light ph-trend-up"></i> + USD 160.00 vs v1
+              </div>
+            </div>
+
+            <div class="flex gap-2">
+              <button class="flex-1 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-[#2d2d2d] text-gray-600 dark:text-gray-200 text-center py-2 px-3 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center justify-center gap-2">
+                <i class="ph-light ph-eye"></i> Ver PDF archivado
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Version 1 -->
+        <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+          <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-[#fafafa] dark:border-dark-bg bg-gray-100 dark:bg-dark-surface shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 text-gray-400">
+            <i class="ph-light ph-file-text text-lg"></i>
+          </div>
+          
+          <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white dark:bg-dark-surface p-6 rounded-3xl border border-gray-100 dark:border-dark-border hover:border-gray-200 dark:hover:border-gray-700 transition-colors shadow-sm relative opacity-60 hover:opacity-100">
+            
+            <div class="flex items-center gap-2 text-sm text-gray-400 dark:text-dark-muted mb-2 font-medium">
+              <i class="ph-light ph-clock"></i> Lunes, 09:15 AM
+            </div>
+            <h3 class="text-lg font-medium text-gray-800 dark:text-white mb-1">Versión 1 - Propuesta Inicial</h3>
+            <div class="text-[13px] text-gray-500 dark:text-gray-400 font-light mb-4">Alojamiento en Hotel Madrid Value sin traslados.</div>
+            
+            <div class="bg-gray-50 dark:bg-[#1a1a1a] p-4 rounded-xl border border-gray-100 dark:border-dark-border mb-4">
+              <div class="flex justify-between items-center">
+                <span class="text-sm font-medium text-gray-600 dark:text-gray-300">Total</span>
+                <span class="text-lg font-semibold text-gray-800 dark:text-white">USD 620.00</span>
+              </div>
+            </div>
+
+            <div class="flex gap-2">
+              <button class="flex-1 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-[#2d2d2d] text-gray-600 dark:text-gray-200 text-center py-2 px-3 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center justify-center gap-2">
+                <i class="ph-light ph-eye"></i> Ver PDF archivado
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+</body>
+</html>

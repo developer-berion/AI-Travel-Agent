@@ -117,6 +117,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      operator_notes: {
+        Row: {
+          content: string;
+          created_at: string;
+          id: string;
+          quote_session_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          content: string;
+          created_at?: string;
+          id?: string;
+          quote_session_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          content?: string;
+          created_at?: string;
+          id?: string;
+          quote_session_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       structured_intakes: {
         Row: {
           contradictions: Json;
@@ -312,6 +336,45 @@ export type Database = {
           snapshot_id?: string;
           storage_bucket?: string;
           storage_path?: string;
+        };
+        Relationships: [];
+      };
+      quote_versions: {
+        Row: {
+          change_reason: string;
+          coverage_state: string;
+          created_at: string;
+          diff_summary: string | null;
+          id: string;
+          payload: Json;
+          quote_session_id: string;
+          updated_at: string;
+          version_number: number;
+          version_state: string;
+        };
+        Insert: {
+          change_reason: string;
+          coverage_state: string;
+          created_at?: string;
+          diff_summary?: string | null;
+          id?: string;
+          payload?: Json;
+          quote_session_id: string;
+          updated_at?: string;
+          version_number: number;
+          version_state: string;
+        };
+        Update: {
+          change_reason?: string;
+          coverage_state?: string;
+          created_at?: string;
+          diff_summary?: string | null;
+          id?: string;
+          payload?: Json;
+          quote_session_id?: string;
+          updated_at?: string;
+          version_number?: number;
+          version_state?: string;
         };
         Relationships: [];
       };

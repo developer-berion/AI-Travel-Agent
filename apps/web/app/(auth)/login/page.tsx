@@ -18,8 +18,8 @@ export default async function LoginPage() {
       <section className="auth-shell">
         <header className="auth-toolbar">
           <div>
-            <p className="eyebrow">Operator workspace</p>
-            <h2>Access control</h2>
+            <p className="eyebrow">Alana AI</p>
+            <h2>Acceso al workspace</h2>
           </div>
           <ThemeToggle />
         </header>

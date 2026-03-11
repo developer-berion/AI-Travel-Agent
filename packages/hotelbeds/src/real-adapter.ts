@@ -497,7 +497,7 @@ const normalizeHotels = (
     })
     .filter(isNormalizedOption)
     .sort((left, right) => left.headlinePrice - right.headlinePrice)
-    .slice(0, 3);
+    .slice(0, 5);
 
   if (options.length === 0) {
     return buildErrorResult(
@@ -574,7 +574,7 @@ const normalizeActivities = (
     })
     .filter(isNormalizedOption)
     .sort((left, right) => left.headlinePrice - right.headlinePrice)
-    .slice(0, 3);
+    .slice(0, 5);
 
   if (options.length === 0) {
     return buildErrorResult(
@@ -662,7 +662,7 @@ const normalizeTransfers = (
     })
     .filter(isNormalizedOption)
     .sort((left, right) => left.headlinePrice - right.headlinePrice)
-    .slice(0, 3);
+    .slice(0, 5);
 
   if (options.length === 0) {
     return buildErrorResult(

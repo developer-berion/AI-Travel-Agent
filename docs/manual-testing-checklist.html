@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Alana Manual Testing Checklist</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f1e8;
+        --panel: #fffdf8;
+        --ink: #1f1f1a;
+        --muted: #615f55;
+        --line: #d6cfbf;
+        --accent: #18654b;
+        --accent-soft: #d8efe5;
+        --warn: #8f4c24;
+        --warn-soft: #f6e3d3;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at top left, #fff7da 0, transparent 26rem),
+          linear-gradient(180deg, #f7f3ea 0%, var(--bg) 100%);
+        color: var(--ink);
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.45;
+      }
+
+      main {
+        width: min(1100px, calc(100% - 32px));
+        margin: 32px auto 64px;
+      }
+
+      .hero,
+      .scenario {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        box-shadow: 0 18px 40px rgba(48, 42, 28, 0.08);
+      }
+
+      .hero {
+        padding: 28px;
+        margin-bottom: 20px;
+      }
+
+      .hero h1,
+      .scenario h2 {
+        margin: 0 0 10px;
+      }
+
+      .hero p,
+      .scenario p,
+      .scenario li,
+      .scenario label,
+      .scenario summary,
+      .meta li {
+        color: var(--muted);
+      }
+
+      .meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 12px;
+        margin: 18px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .meta li {
+        background: #faf6ed;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 12px 14px;
+      }
+
+      .pill {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .pill.ok {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+
+      .pill.warn {
+        background: var(--warn-soft);
+        color: var(--warn);
+      }
+
+      .scenario {
+        padding: 24px;
+        margin-top: 16px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 18px;
+        margin-top: 16px;
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 16px;
+        background: #fcfaf4;
+      }
+
+      .card h3 {
+        margin: 0 0 10px;
+        font-size: 15px;
+      }
+
+      .checklist {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .checklist li + li {
+        margin-top: 10px;
+      }
+
+      .checklist label {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+      }
+
+      input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        margin-top: 2px;
+        accent-color: var(--accent);
+        flex: 0 0 auto;
+      }
+
+      code,
+      a {
+        color: #0d4f8b;
+      }
+
+      details {
+        margin-top: 12px;
+      }
+
+      .note {
+        margin-top: 16px;
+        padding: 14px;
+        border-radius: 14px;
+        background: var(--warn-soft);
+        border: 1px solid #e8c6a7;
+        color: #6a452d;
+      }
+
+      .footer-note {
+        margin-top: 20px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="hero">
+        <span class="pill ok">Manual QA</span>
+        <h1>Alana manual testing checklist</h1>
+        <p>
+          Usa este checklist para validar el workbench operator-facing sobre el
+          staging actual. Marca cada item cuando el resultado visible coincida
+          con lo esperado.
+        </p>
+        <ul class="meta">
+          <li>
+            <strong>Staging</strong><br />
+            <a href="https://alana-ai-agent.vercel.app/login" target="_blank" rel="noreferrer">
+              https://alana-ai-agent.vercel.app/login
+            </a>
+          </li>
+          <li>
+            <strong>Usuario</strong><br />
+            <code>victor@alanatours.com</code>
+          </li>
+          <li>
+            <strong>Password</strong><br />
+            Usar la credencial entregada por separado.
+          </li>
+          <li>
+            <strong>Objetivo</strong><br />
+            Validar login, workspace, continuidad, quote, compare, versions y export.
+          </li>
+        </ul>
+        <div class="note">
+          La password no se guarda en este archivo para no dejar credenciales en el repo.
+        </div>
+      </section>
+
+      <section class="scenario">
+        <span class="pill ok">Escenario 1</span>
+        <h2>Login y acceso base</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>Pasos</h3>
+            <ol>
+              <li>Abre el link de staging.</li>
+              <li>Ingresa el correo de pruebas.</li>
+              <li>Ingresa la password entregada.</li>
+              <li>Presiona <code>Sign in</code>.</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>Checklist</h3>
+            <ul class="checklist">
+              <li><label><input type="checkbox" /> La pantalla de login carga sin error.</label></li>
+              <li><label><input type="checkbox" /> El login redirige a <code>/quotes</code>.</label></li>
+              <li><label><input type="checkbox" /> El layout muestra modo <code>Supabase auth</code>.</label></li>
+              <li><label><input type="checkbox" /> El nombre del operador aparece en el header.</label></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="scenario">
+        <span class="pill ok">Escenario 2</span>
+        <h2>Workspace e inbox agrupado</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>Pasos</h3>
+            <ol>
+              <li>Entra al workspace de quotes.</li>
+              <li>Revisa los grupos visibles del inbox.</li>
+              <li>Usa el buscador.</li>
+              <li>Prueba filtros comerciales y toggle de archivadas.</li>
+              <li>Abre un caso desde el inbox.</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>Checklist</h3>
+            <ul class="checklist">
+              <li><label><input type="checkbox" /> Se ven grupos como accion requerida, en seguimiento, compartidas, cerradas y archivadas.</label></li>
+              <li><label><input type="checkbox" /> Cada case card muestra titulo, destino o ruta, fechas, mix de servicios y ultima actividad.</label></li>
+              <li><label><input type="checkbox" /> El filtro cambia la lista visible sin romper el layout.</label></li>
+              <li><label><input type="checkbox" /> Los casos archivados se distinguen visualmente de los activos.</label></li>
+              <li><label><input type="checkbox" /> Abrir un caso lleva al workbench correcto.</label></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="scenario">
+        <span class="pill ok">Escenario 3</span>
+        <h2>Blocked intake y continuidad inicial</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>Prompt sugerido</h3>
+            <p>
+              <code>Need hotel and transfer in Majorca from 2026-05-08 to 2026-05-10 for 2 adults.</code>
+            </p>
+            <p>Esto suele dejar hotel listo y transfer bloqueado por pickup exacto.</p>
+          </div>
+          <div class="card">
+            <h3>Checklist</h3>
+            <ul class="checklist">
+              <li><label><input type="checkbox" /> En <code>Conversation</code> aparece summary banner arriba.</label></li>
+              <li><label><input type="checkbox" /> Se ve una system card de <code>Blocking clarification</code>.</label></li>
+              <li><label><input type="checkbox" /> El transcript no es la unica superficie de estado.</label></li>
+              <li><label><input type="checkbox" /> En <code>Case</code> aparecen blockers, facts y pending items.</label></li>
+              <li><label><input type="checkbox" /> El composer sigue operativo para responder la aclaracion.</label></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="scenario">
+        <span class="pill ok">Escenario 4</span>
+        <h2>Partial coverage y no results</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>Prompts sugeridos</h3>
+            <p>
+              <strong>Partial coverage</strong><br />
+              <code>Need hotel and transfer from Palma airport to the hotel in Majorca from 2026-05-08 to 2026-05-10 for 2 adults.</code>
+            </p>
+            <p>
+              <strong>No results</strong><br />
+              <code>Need activities in Smallville for 2 adults on 2026-06-12.</code>
+            </p>
+          </div>
+          <div class="card">
+            <h3>Checklist</h3>
+            <ul class="checklist">
+              <li><label><input type="checkbox" /> En partial coverage aparece caveat o coverage banner visible.</label></li>
+              <li><label><input type="checkbox" /> No results muestra recovery guidance y no deja la UI vacia.</label></li>
+              <li><label><input type="checkbox" /> El operador puede identificar que capa falta o quedo debil.</label></li>
+              <li><label><input type="checkbox" /> La continuidad del caso sigue visible despues del fallback.</label></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="scenario">
+        <span class="pill ok">Escenario 5</span>
+        <h2>Quote review, pricing split y operator notes</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>Pasos</h3>
+            <ol>
+              <li>Llega a un caso con shortlist y seleccion activa.</li>
+              <li>Abre la vista <code>Quote</code>.</li>
+              <li>Abre <code>Case</code> y escribe una operator note.</li>
+              <li>Vuelve a <code>Quote</code>.</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>Checklist</h3>
+            <ul class="checklist">
+              <li><label><input type="checkbox" /> El quote muestra header, summary, coverage banner y categorias.</label></li>
+              <li><label><input type="checkbox" /> Se ven bloques separados para included, not included y review separately.</label></li>
+              <li><label><input type="checkbox" /> Pending conditions aparece separado del pricing.</label></li>
+              <li><label><input type="checkbox" /> La operator note se ve en surfaces internas.</label></li>
+              <li><label><input type="checkbox" /> La operator note no aparece en el quote shareable.</label></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="scenario">
+        <span class="pill ok">Escenario 6</span>
+        <h2>Compare category-specific</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>Pasos</h3>
+            <ol>
+              <li>Desde la shortlist, selecciona hasta 5 opciones de una misma categoria.</li>
+              <li>Abre el compare panel.</li>
+              <li>Cambia la categoria desde el selector.</li>
+              <li>Promueve una opcion nueva al active quote.</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>Checklist</h3>
+            <ul class="checklist">
+              <li><label><input type="checkbox" /> El compare usa selector de categoria y chips seleccionados.</label></li>
+              <li><label><input type="checkbox" /> La comparacion es side-by-side, no cards apiladas.</label></li>
+              <li><label><input type="checkbox" /> Las filas se separan en Top y Secondary.</label></li>
+              <li><label><input type="checkbox" /> Promover una opcion actualiza el active quote.</label></li>
+              <li><label><input type="checkbox" /> El compare no se mezcla con la superficie shareable.</label></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="scenario">
+        <span class="pill ok">Escenario 7</span>
+        <h2>Versions y reuse as base</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>Pasos</h3>
+            <ol>
+              <li>Haz un cambio que cree una nueva active version.</li>
+              <li>Abre la vista <code>Versions</code>.</li>
+              <li>Selecciona una version superseded.</li>
+              <li>Usa <code>Use as base</code> si el caso lo permite.</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>Checklist</h3>
+            <ul class="checklist">
+              <li><label><input type="checkbox" /> La active version y las superseded se distinguen claramente.</label></li>
+              <li><label><input type="checkbox" /> El detail pane muestra snapshot y diff resumido.</label></li>
+              <li><label><input type="checkbox" /> Solo las superseded muestran <code>Use as base</code>.</label></li>
+              <li><label><input type="checkbox" /> Share y export siguen reservados a la active version.</label></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="scenario">
+        <span class="pill ok">Escenario 8</span>
+        <h2>Archive, reactivate y resume continuity</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>Pasos</h3>
+            <ol>
+              <li>Archiva un caso desde workspace o workbench.</li>
+              <li>Vuelve al inbox y confirma su estado.</li>
+              <li>Reactiva el caso.</li>
+              <li>Abre <code>Conversation</code>.</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>Checklist</h3>
+            <ul class="checklist">
+              <li><label><input type="checkbox" /> Archivado no se comporta como delete.</label></li>
+              <li><label><input type="checkbox" /> Reactivar devuelve el caso al flujo activo.</label></li>
+              <li><label><input type="checkbox" /> Al reabrir, primero se ve el resume snapshot o summary banner.</label></li>
+              <li><label><input type="checkbox" /> El transcript queda por debajo y no le gana a la continuidad.</label></li>
+              <li><label><input type="checkbox" /> Se distingue visualmente follow-up vs archived.</label></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="scenario">
+        <span class="pill ok">Escenario 9</span>
+        <h2>Share y export del quote activo</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>Pasos</h3>
+            <ol>
+              <li>Con una version activa completa, abre <code>Quote</code>.</li>
+              <li>Usa <code>Copy shareable summary</code>.</li>
+              <li>Usa <code>Export printable artifact</code>.</li>
+              <li>Abre la pagina del export generado.</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>Checklist</h3>
+            <ul class="checklist">
+              <li><label><input type="checkbox" /> Copy shareable summary responde sin incluir notas internas.</label></li>
+              <li><label><input type="checkbox" /> Export genera un PDF descargable valido.</label></li>
+              <li><label><input type="checkbox" /> La pagina export es printable y consistente con el quote activo.</label></li>
+              <li><label><input type="checkbox" /> Luego de copy o export aparece el reminder de estado comercial.</label></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="scenario">
+        <span class="pill warn">Cierre manual</span>
+        <h2>Checks transversales</h2>
+        <ul class="checklist">
+          <li><label><input type="checkbox" /> Dark mode y light mode mantienen jerarquia y legibilidad.</label></li>
+          <li><label><input type="checkbox" /> El foco de teclado es visible en login, workspace, tabs y acciones.</label></li>
+          <li><label><input type="checkbox" /> No hay fugas de operator notes en shareable, export ni PDF.</label></li>
+          <li><label><input type="checkbox" /> No hay errores visibles de permisos, autenticacion ni loops de redireccion.</label></li>
+          <li><label><input type="checkbox" /> Los labels comerciales se mantienen consistentes entre inbox, header, quote y versions.</label></li>
+        </ul>
+
+        <details>
+          <summary>Espacio para notas finales</summary>
+          <p>
+            Documenta aqui cualquier bug, diferencia visual, regresion o caso no cubierto.
+          </p>
+          <p>Fecha: ____________________</p>
+          <p>Tester: ____________________</p>
+          <p>Observaciones: ________________________________________________</p>
+        </details>
+
+        <p class="footer-note">
+          Archivo pensado para abrirse localmente en navegador y usarse como checklist manual.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

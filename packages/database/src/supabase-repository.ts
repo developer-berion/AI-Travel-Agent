@@ -3,11 +3,13 @@ import type {
   BlockingField,
   CommercialStatus,
   NormalizedOption,
+  OperatorNote,
   QuoteExport,
   QuoteExportSnapshot,
   QuoteMessage,
   QuoteSession,
   QuoteSessionState,
+  QuoteVersion,
   RecommendationMode,
   ServiceLine,
   Shortlist,
@@ -85,6 +87,31 @@ const mapAuditEventRow = (
   eventName: row.event_name as AuditEvent["eventName"],
   payload: row.payload as AuditEvent["payload"],
   createdAt: row.created_at,
+});
+
+const mapOperatorNoteRow = (
+  row: Database["public"]["Tables"]["operator_notes"]["Row"],
+): OperatorNote => ({
+  content: row.content,
+  createdAt: row.created_at,
+  id: row.id,
+  quoteSessionId: row.quote_session_id,
+  updatedAt: row.updated_at,
+});
+
+const mapQuoteVersionRow = (
+  row: Database["public"]["Tables"]["quote_versions"]["Row"],
+): QuoteVersion => ({
+  changeReason: row.change_reason,
+  coverageState: row.coverage_state as QuoteVersion["coverageState"],
+  createdAt: row.created_at,
+  diffSummary: row.diff_summary,
+  id: row.id,
+  payload: row.payload as QuoteVersion["payload"],
+  quoteSessionId: row.quote_session_id,
+  updatedAt: row.updated_at,
+  versionNumber: row.version_number,
+  versionState: row.version_state as QuoteVersion["versionState"],
 });
 
 const mapQuoteExportSnapshotRow = (
@@ -221,6 +248,31 @@ const mapSelectedItemInsert = (
   updated_at: nowIso(),
 });
 
+const mapOperatorNoteInsert = (
+  operatorNote: OperatorNote,
+): Database["public"]["Tables"]["operator_notes"]["Insert"] => ({
+  content: operatorNote.content,
+  created_at: operatorNote.createdAt,
+  id: operatorNote.id,
+  quote_session_id: operatorNote.quoteSessionId,
+  updated_at: operatorNote.updatedAt,
+});
+
+const mapQuoteVersionInsert = (
+  quoteVersion: QuoteVersion,
+): Database["public"]["Tables"]["quote_versions"]["Insert"] => ({
+  change_reason: quoteVersion.changeReason,
+  coverage_state: quoteVersion.coverageState,
+  created_at: quoteVersion.createdAt,
+  diff_summary: quoteVersion.diffSummary,
+  id: quoteVersion.id,
+  payload: quoteVersion.payload as Json,
+  quote_session_id: quoteVersion.quoteSessionId,
+  updated_at: quoteVersion.updatedAt,
+  version_number: quoteVersion.versionNumber,
+  version_state: quoteVersion.versionState,
+});
+
 const getShortlists = async (
   client: SupabaseClient<Database>,
   quoteSessionId: string,
@@ -281,9 +333,11 @@ const mapPersistedRecord = async (
   const [
     messagesResult,
     intakeResult,
+    operatorNoteResult,
     selectedItemsResult,
     shortlists,
     auditResult,
+    quoteVersionsResult,
   ] = await Promise.all([
     client
       .from("quote_messages")
@@ -292,6 +346,11 @@ const mapPersistedRecord = async (
       .order("created_at", { ascending: true }),
     client
       .from("structured_intakes")
+      .select("*")
+      .eq("quote_session_id", session.id)
+      .maybeSingle(),
+    client
+      .from("operator_notes")
       .select("*")
       .eq("quote_session_id", session.id)
       .maybeSingle(),
@@ -306,6 +365,11 @@ const mapPersistedRecord = async (
       .select("*")
       .eq("quote_session_id", session.id)
       .order("created_at", { ascending: true }),
+    client
+      .from("quote_versions")
+      .select("*")
+      .eq("quote_session_id", session.id)
+      .order("version_number", { ascending: false }),
   ]);
 
   if (messagesResult.error) {
@@ -320,8 +384,16 @@ const mapPersistedRecord = async (
     throw auditResult.error;
   }
 
+  if (operatorNoteResult.error) {
+    throw operatorNoteResult.error;
+  }
+
   if (selectedItemsResult.error) {
     throw selectedItemsResult.error;
+  }
+
+  if (quoteVersionsResult.error) {
+    throw quoteVersionsResult.error;
   }
 
   const messageRows = messagesResult.data as
@@ -330,11 +402,17 @@ const mapPersistedRecord = async (
   const intakeRow = intakeResult.data as
     | Database["public"]["Tables"]["structured_intakes"]["Row"]
     | null;
+  const operatorNoteRow = operatorNoteResult.data as
+    | Database["public"]["Tables"]["operator_notes"]["Row"]
+    | null;
   const selectedItemRows = selectedItemsResult.data as
     | Database["public"]["Tables"]["selected_quote_items"]["Row"][]
     | null;
   const auditRows = auditResult.data as
     | Database["public"]["Tables"]["audit_events"]["Row"][]
+    | null;
+  const quoteVersionRows = quoteVersionsResult.data as
+    | Database["public"]["Tables"]["quote_versions"]["Row"][]
     | null;
 
   return {
@@ -344,6 +422,8 @@ const mapPersistedRecord = async (
     selectedItems: (selectedItemRows ?? []).map(mapSelectedItemRow),
     shortlists,
     auditEvents: (auditRows ?? []).map(mapAuditEventRow),
+    operatorNote: operatorNoteRow ? mapOperatorNoteRow(operatorNoteRow) : null,
+    quoteVersions: (quoteVersionRows ?? []).map(mapQuoteVersionRow),
   } satisfies QuoteRecord;
 };
 
@@ -386,6 +466,8 @@ export const createSupabaseQuoteRepository = (
       selectedItems: [],
       shortlists: [],
       auditEvents: [],
+      operatorNote: null,
+      quoteVersions: [],
     };
   },
   async listSessions(operatorId) {
@@ -510,6 +592,46 @@ export const createSupabaseQuoteRepository = (
 
       if (selectedItemsError) {
         throw selectedItemsError;
+      }
+    }
+
+    if (record.operatorNote) {
+      const { error: operatorNoteError } = await client
+        .from("operator_notes")
+        .upsert(mapOperatorNoteInsert(record.operatorNote), {
+          onConflict: "quote_session_id",
+        });
+
+      if (operatorNoteError) {
+        throw operatorNoteError;
+      }
+    } else {
+      const { error: deleteOperatorNoteError } = await client
+        .from("operator_notes")
+        .delete()
+        .eq("quote_session_id", record.session.id);
+
+      if (deleteOperatorNoteError) {
+        throw deleteOperatorNoteError;
+      }
+    }
+
+    const { error: deleteQuoteVersionsError } = await client
+      .from("quote_versions")
+      .delete()
+      .eq("quote_session_id", record.session.id);
+
+    if (deleteQuoteVersionsError) {
+      throw deleteQuoteVersionsError;
+    }
+
+    if (record.quoteVersions.length > 0) {
+      const { error: quoteVersionsError } = await client
+        .from("quote_versions")
+        .insert(record.quoteVersions.map(mapQuoteVersionInsert));
+
+      if (quoteVersionsError) {
+        throw quoteVersionsError;
       }
     }
 

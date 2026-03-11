@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es" class="antialiased">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alana AI - Exportar PDF</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            primary: {
+              DEFAULT: '#8A5A9E',
+              hover: '#7A4A8E',
+              soft: '#F4F0F6',
+              darkSoft: '#2D2034',
+              text: '#6A3A7E'
+            },
+            pastel: {
+              red: '#FFE5E5',
+              redText: '#D94040',
+              yellow: '#FFF3CD',
+              yellowText: '#D99A2B',
+              green: '#E5F6DF',
+              greenText: '#4A9B3E',
+              blue: '#E5F0FF',
+              blueText: '#3A7BD5'
+            },
+            dark: {
+              bg: '#121212',
+              surface: '#1E1E1E',
+              border: '#2A2A2A',
+              text: '#E0E0E0',
+              muted: '#888888'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 4px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; }
+    
+    /* PDF paper simulation */
+    .pdf-page {
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      aspect-ratio: 1 / 1.414; /* A4 Ratio */
+    }
+    .dark .pdf-page {
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+  </style>
+</head>
+<body class="bg-[#fafafa] dark:bg-dark-bg text-gray-800 dark:text-gray-200 transition-colors duration-200 h-screen flex flex-col overflow-hidden">
+
+  <!-- Header -->
+  <header class="h-16 flex items-center justify-between px-8 bg-white dark:bg-dark-surface border-b border-gray-100 dark:border-dark-border z-10 shrink-0">
+    <div class="flex items-center gap-4">
+      <a href="quote-review.html" class="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-800 dark:text-dark-muted dark:hover:text-white transition-colors">
+        <i class="ph-light ph-arrow-left text-lg"></i> Revisión
+      </a>
+      <div class="h-4 w-px bg-gray-200 dark:bg-dark-border"></div>
+      <h1 class="text-xl font-medium text-gray-800 dark:text-gray-100">Exportar Propuesta</h1>
+      <span class="bg-gray-100 dark:bg-[#333] text-gray-600 dark:text-gray-300 text-xs px-2.5 py-1 rounded-full hidden md:inline-block">Viaje a Madrid</span>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <button onclick="document.documentElement.classList.toggle('dark')" class="w-10 h-10 rounded-xl hover:bg-gray-50 dark:hover:bg-[#2d2d2d] flex items-center justify-center text-gray-400 transition-colors">
+        <i class="ph-light ph-moon text-xl dark:hidden"></i>
+        <i class="ph-light ph-sun text-xl hidden dark:block"></i>
+      </button>
+      <button class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-xl text-sm font-medium transition-all shadow-sm flex items-center gap-2">
+        <i class="ph-light ph-download-simple"></i> Generar y Finalizar
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 overflow-hidden flex flex-col md:flex-row w-full h-full">
+    
+    <!-- Left Column (Settings) -->
+    <aside class="w-full md:w-80 flex flex-col shrink-0 bg-white dark:bg-dark-surface border-r border-gray-100 dark:border-dark-border h-full overflow-y-auto custom-scrollbar">
+      
+      <div class="p-6">
+        <h2 class="text-sm font-semibold text-gray-400 tracking-widest uppercase mb-6">Configuración Visual</h2>
+        
+        <div class="space-y-6">
+          <!-- Toggle 1 -->
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-sm font-medium text-gray-800 dark:text-gray-200">Logo de la Agencia</div>
+              <div class="text-[11px] text-gray-500 dark:text-dark-muted font-light mt-0.5">Incluir cabecera corporativa</div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" value="" class="sr-only peer" checked>
+              <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+            </label>
+          </div>
+
+          <!-- Toggle 2 -->
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-sm font-medium text-gray-800 dark:text-gray-200">Desglose de Precios</div>
+              <div class="text-[11px] text-gray-500 dark:text-dark-muted font-light mt-0.5">Mostrar precio por cada servicio</div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" value="" class="sr-only peer" checked>
+              <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+            </label>
+          </div>
+
+          <!-- Toggle 3 -->
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-sm font-medium text-gray-800 dark:text-gray-200">Políticas de Cancelación</div>
+              <div class="text-[11px] text-gray-500 dark:text-dark-muted font-light mt-0.5">Adjuntar página de términos</div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" value="" class="sr-only peer" checked>
+              <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+            </label>
+          </div>
+        </div>
+
+        <div class="h-px bg-gray-100 dark:bg-dark-border my-8"></div>
+
+        <h2 class="text-sm font-semibold text-gray-400 tracking-widest uppercase mb-6">Datos de Contacto</h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-[13px] font-medium text-gray-700 dark:text-gray-300 mb-1.5">Agente a cargo</label>
+            <input type="text" value="Victor Berion" class="w-full px-3 py-2 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-dark-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary dark:text-white transition-all">
+          </div>
+          <div>
+            <label class="block text-[13px] font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email de contacto</label>
+            <input type="email" value="victor@alanatours.com" class="w-full px-3 py-2 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-dark-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary dark:text-white transition-all">
+          </div>
+        </div>
+
+      </div>
+
+    </aside>
+
+    <!-- Right Column (Preview) -->
+    <section class="flex-1 overflow-auto custom-scrollbar p-6 lg:p-12 relative flex justify-center bg-gray-100/50 dark:bg-dark-surface/30">
+      
+      <!-- Toggle Demo Button (Absolute top right of the section) -->
+      <div class="absolute top-4 right-4 z-20">
+        <button onclick="document.getElementById('loading-overlay').classList.toggle('hidden')" class="text-[10px] bg-white hover:bg-gray-50 dark:bg-[#333] dark:hover:bg-[#444] text-gray-500 dark:text-gray-300 px-2 py-1 rounded shadow border border-gray-200 dark:border-dark-border transition-colors">Toggle Gen Loading</button>
+      </div>
+
+      <!-- Loading Overlay -->
+      <div id="loading-overlay" class="hidden absolute inset-0 bg-white/60 dark:bg-dark-bg/60 backdrop-blur-sm z-10 flex flex-col justify-center items-center">
+        <div class="bg-white dark:bg-dark-surface p-6 rounded-2xl shadow-xl border border-gray-100 dark:border-dark-border flex flex-col items-center">
+          <i class="ph-light ph-spinner-gap text-3xl text-primary animate-spin mb-3"></i>
+          <h3 class="font-medium text-gray-800 dark:text-gray-200">Generando Documento...</h3>
+          <p class="text-[13px] text-gray-500 dark:text-dark-muted mt-1">Conectando con Motor de Renderizado PDF</p>
+        </div>
+      </div>
+
+      <!-- The PDF Page Simulation -->
+      <div class="pdf-page bg-white w-full max-w-[800px] rounded-sm flex flex-col p-12 lg:p-16 relative">
+        
+        <!-- Document Content (Mock) -->
+        <div class="flex justify-between items-start border-b border-gray-200 pb-8 mb-8">
+          <div>
+            <div class="text-3xl font-bold text-gray-900 tracking-tight">ALANA TOURS</div>
+            <div class="text-sm text-gray-500 mt-2">Cotización de Servicios Turísticos</div>
+          </div>
+          <div class="text-right">
+            <div class="font-medium text-gray-800">Fecha: 11 Mar 2026</div>
+            <div class="text-sm text-gray-500 mt-1">Ref: MAD-2605</div>
+          </div>
+        </div>
+
+        <div class="mb-10">
+          <h1 class="text-2xl font-semibold text-gray-800 mb-2">Propuesta: Viaje a Madrid</h1>
+          <p class="text-gray-600">1 May - 5 May, 2026 • 2 Adultos</p>
+        </div>
+
+        <div class="flex-1">
+          <table class="w-full text-left">
+            <thead>
+              <tr class="border-b-2 border-gray-800">
+                <th class="py-3 font-semibold text-gray-800">Servicio</th>
+                <th class="py-3 font-semibold text-gray-800 text-right">Precio</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <tr>
+                <td class="py-4">
+                  <div class="font-medium text-gray-800">Hotel Madrid Grand</div>
+                  <div class="text-sm text-gray-500 mt-0.5">Habitación Doble Estándar (4 Noches)</div>
+                </td>
+                <td class="py-4 text-right font-medium text-gray-800">USD 780.00</td>
+              </tr>
+              <tr>
+                <td class="py-4">
+                  <div class="font-medium text-gray-800">Traslado Privado SUV</div>
+                  <div class="text-sm text-gray-500 mt-0.5">Aeropuerto MAD - Hotel (Ida y Vuelta)</div>
+                </td>
+                <td class="py-4 text-right font-medium text-gray-800">USD 80.00</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="border-t-2 border-gray-800">
+                <td class="py-4 font-semibold text-gray-800 text-right">Total:</td>
+                <td class="py-4 font-bold text-2xl text-gray-900 text-right">USD 860.00</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <div class="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-100">
+            <h4 class="font-medium text-gray-800 text-sm mb-1">Notas Importantes</h4>
+            <p class="text-[13px] text-gray-600">No incluye impuestos turísticos a pagar directamente en el hotel (Aprox. $45/noche).</p>
+          </div>
+        </div>
+
+        <div class="border-t border-gray-200 pt-6 mt-12 text-sm text-gray-500 flex justify-between">
+          <div>
+            <div class="font-medium text-gray-800">Victor Berion</div>
+            <div>victor@alanatours.com</div>
+          </div>
+          <div class="text-right">
+            Página 1 de 2
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+</body>
+</html>

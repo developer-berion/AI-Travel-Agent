@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alana AI - Prototipo Hoja de Caso</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            dark: {
+              bg: '#1c1c1c', 
+              sidebar: '#141414',
+              surface: '#262626',
+              border: '#333333',
+              text: '#e5e5e5',
+              muted: '#a3a3a3'
+            },
+            primary: {
+              DEFAULT: '#a78bfa',
+              hover: '#8b5cf6',
+              soft: '#ede9fe',
+              darkSoft: '#4c1d95',
+              text: '#5b21b6'
+            },
+            pastel: {
+              blue: '#bfdbfe',
+              blueText: '#1e40af',
+              red: '#fecdd3',
+              redText: '#9f1239',
+              yellow: '#fef08a',
+              yellowText: '#854d0e',
+              green: '#bbf7d0',
+              greenText: '#166534'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #e5e5e5; border-radius: 10px; }
+    .dark ::-webkit-scrollbar-thumb { background: #404040; }
+  </style>
+</head>
+<body class="bg-[#fafafa] dark:bg-dark-bg text-gray-800 dark:text-dark-text overflow-hidden h-screen flex transition-colors duration-300">
+
+  <!-- Sidebar Omitted for brevity -->
+  <aside class="bg-white dark:bg-dark-sidebar w-20 h-full flex flex-col items-center py-6 transition-all duration-300 border-r border-gray-100 dark:border-dark-border shadow-sm z-20">
+    <div class="w-10 h-10 rounded-xl bg-primary-soft dark:bg-primary-darkSoft/40 flex items-center justify-center text-primary-text dark:text-primary-DEFAULT mb-8 shadow-sm">
+      <i class="ph-light ph-sparkle text-xl"></i>
+    </div>
+    
+    <div class="flex flex-col gap-4 flex-1">
+      <a href="index.html" class="w-10 h-10 rounded-xl hover:bg-gray-50 dark:hover:bg-dark-surface flex items-center justify-center text-gray-400 transition-colors" title="Chat">
+        <i class="ph-light ph-chat-teardrop text-xl"></i>
+      </a>
+      <a href="compare-matrix.html" class="w-10 h-10 rounded-xl hover:bg-gray-50 dark:hover:bg-dark-surface flex items-center justify-center text-gray-400 transition-colors" title="Comparar">
+        <i class="ph-light ph-git-diff text-xl"></i>
+      </a>
+      <a href="quote-review.html" class="w-10 h-10 rounded-xl hover:bg-gray-50 dark:hover:bg-dark-surface flex items-center justify-center text-gray-400 transition-colors" title="Revisar Cotización">
+        <i class="ph-light ph-files text-xl"></i>
+      </a>
+      <div class="w-10 h-10 rounded-xl bg-gray-100 dark:bg-dark-surface flex items-center justify-center text-primary transition-colors shadow-inner" title="Hoja de Caso">
+        <i class="ph-light ph-kanban text-xl"></i>
+      </div>
+    </div>
+
+    <!-- Theme Toggle -->
+    <button class="w-10 h-10 rounded-xl hover:bg-gray-50 dark:hover:bg-dark-surface flex items-center justify-center text-gray-400 transition-colors mt-auto mb-4" id="theme-toggle">
+      <i class="ph-light ph-sun dark:hidden text-xl"></i>
+      <i class="ph-light ph-moon hidden dark:block text-xl"></i>
+    </button>
+  </aside>
+
+  <!-- Main Area -->
+  <main class="flex-1 flex flex-col h-full bg-[#fafafa] dark:bg-dark-bg relative overflow-hidden">
+    
+    <!-- Header -->
+    <header class="h-16 flex items-center justify-between px-8 bg-[#fafafa]/80 dark:bg-dark-bg/80 backdrop-blur-md z-10 border-b border-gray-100 dark:border-dark-border">
+      <div class="flex items-center gap-4">
+        <a href="index.html" class="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-800 dark:text-dark-muted dark:hover:text-white transition-colors">
+          <i class="ph-light ph-arrow-left text-lg"></i> Volver al chat
+        </a>
+        <div class="h-4 w-px bg-gray-200 dark:bg-dark-border"></div>
+        <h1 class="text-xl font-medium text-gray-800 dark:text-gray-100">Hoja de Caso</h1>
+        <span class="bg-gray-100 dark:bg-[#333] text-gray-600 dark:text-gray-300 text-xs px-2.5 py-1 rounded-full border border-gray-200 dark:border-dark-border font-medium">Borrador</span>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-gray-400 dark:text-dark-muted flex items-center gap-1.5 font-light">
+          <i class="ph-light ph-clock-counter-clockwise"></i> Actualizado hace 2m
+        </span>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-auto p-8 custom-scrollbar relative">
+      <div class="max-w-5xl mx-auto space-y-8 pb-20">
+
+        <!-- Grid Layout for Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+          <!-- Blockers Card -->
+          <div class="bg-white dark:bg-dark-surface rounded-3xl border border-gray-100 dark:border-dark-border shadow-sm overflow-hidden flex flex-col hover:border-pastel-red dark:hover:border-red-900/50 transition-colors duration-300">
+            <div class="p-6 border-b border-gray-50 dark:border-dark-border/50 bg-pastel-red/10 dark:bg-red-900/10">
+              <h3 class="font-semibold text-pastel-redText dark:text-red-400 flex items-center gap-2 text-lg">
+                <i class="ph-light ph-prohibit text-xl"></i> Bloqueos
+              </h3>
+            </div>
+            <div class="p-6 flex-1 space-y-4">
+              <div class="flex gap-3">
+                <div class="mt-0.5 w-1.5 h-1.5 rounded-full bg-pastel-redText dark:bg-red-400 shrink-0"></div>
+                <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed font-light">Faltan los horarios exactos de llegada de los vuelos, lo que imposibilita programar un traslado de recogida confiable.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Open Questions Card -->
+          <div class="bg-white dark:bg-dark-surface rounded-3xl border border-gray-100 dark:border-dark-border shadow-sm overflow-hidden flex flex-col hover:border-pastel-yellow dark:hover:border-yellow-900/50 transition-colors duration-300">
+            <div class="p-6 border-b border-gray-50 dark:border-dark-border/50 bg-pastel-yellow/10 dark:bg-yellow-900/10">
+              <h3 class="font-semibold text-pastel-yellowText dark:text-yellow-500 flex items-center gap-2 text-lg">
+                <i class="ph-light ph-question text-xl"></i> Preguntas Abiertas
+              </h3>
+            </div>
+            <div class="p-6 flex-1 space-y-4">
+              <div class="flex gap-3">
+                <div class="mt-0.5 w-1.5 h-1.5 rounded-full bg-pastel-yellowText dark:bg-yellow-500 shrink-0"></div>
+                <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed font-light">¿El cliente requiere transporte terrestre durante los días en la ciudad, o solo traslados al aeropuerto?</p>
+              </div>
+              <div class="flex gap-3">
+                <div class="mt-0.5 w-1.5 h-1.5 rounded-full bg-pastel-yellowText dark:bg-yellow-500 shrink-0"></div>
+                <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed font-light">¿Existe alguna restricción dietética para los desayunos incluidos?</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Established Facts Card -->
+          <div class="bg-white dark:bg-dark-surface rounded-3xl border border-gray-100 dark:border-dark-border shadow-sm overflow-hidden flex flex-col lg:row-span-2">
+            <div class="p-6 border-b border-gray-50 dark:border-dark-border/50 bg-pastel-blue/10 dark:bg-blue-900/10 flex justify-between items-center">
+              <h3 class="font-semibold text-pastel-blueText dark:text-blue-400 flex items-center gap-2 text-lg">
+                <i class="ph-light ph-info text-xl"></i> Datos Confirmados
+              </h3>
+              <span class="text-xs font-medium bg-pastel-blue/30 dark:bg-blue-900/40 text-pastel-blueText dark:text-blue-300 px-2 py-1 rounded-md">8 elementos</span>
+            </div>
+            <div class="p-6 flex-1">
+              
+              <div class="space-y-6">
+                <!-- Trip Fact Group -->
+                <div>
+                  <h4 class="text-[11px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest mb-3 border-b border-gray-100 dark:border-dark-border pb-1">Detalles del Viaje</h4>
+                  <ul class="space-y-3">
+                     <li class="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300">
+                      <i class="ph-light ph-map-pin text-gray-400 mt-0.5 shrink-0"></i>
+                      <span class="font-light">Destino: Madrid, España</span>
+                    </li>
+                    <li class="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300">
+                      <i class="ph-light ph-calendar text-gray-400 mt-0.5 shrink-0"></i>
+                      <span class="font-light">Fechas: 1 May, 2026 - 5 May, 2026</span>
+                    </li>
+                    <li class="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300">
+                      <i class="ph-light ph-users text-gray-400 mt-0.5 shrink-0"></i>
+                      <span class="font-light">Pax: 2 Adultos</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <!-- Preferences Fact Group -->
+                <div>
+                  <h4 class="text-[11px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest mb-3 border-b border-gray-100 dark:border-dark-border pb-1">Preferencias</h4>
+                  <ul class="space-y-3">
+                     <li class="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300">
+                      <i class="ph-light ph-buildings text-gray-400 mt-0.5 shrink-0"></i>
+                      <span class="font-light">Alojamiento: mín. 4 estrellas, ubicación central</span>
+                    </li>
+                    <li class="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300">
+                      <i class="ph-light ph-money text-gray-400 mt-0.5 shrink-0"></i>
+                      <span class="font-light">Presupuesto: ~$1000 total máx</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const htmlElement = document.documentElement;
+    themeToggleBtn.addEventListener('click', () => {
+      htmlElement.classList.toggle('dark');
+    });
+  </script>
+</body>
+</html>

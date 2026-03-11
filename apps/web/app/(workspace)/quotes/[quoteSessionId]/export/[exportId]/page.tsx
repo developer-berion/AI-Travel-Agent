@@ -1,6 +1,15 @@
 import { notFound } from "next/navigation";
 
+import { buildActiveQuoteViewFromSnapshot } from "@alana/database";
+
+import { ActiveQuoteReview } from "@/components/quote/active-quote-review";
 import { requireOperator } from "@/lib/auth";
+import {
+  commercialStatusUiLabels,
+  formatUiDateTime,
+  quoteStateUiLabels,
+  recommendationModeUiLabels,
+} from "@/lib/presentation";
 import { getQuoteRepository } from "@/lib/repository";
 
 const formatFileSize = (sizeInBytes: number) => {
@@ -38,114 +47,101 @@ export default async function QuoteExportPage({
     notFound();
   }
 
+  const activeQuoteView = buildActiveQuoteViewFromSnapshot(exportSnapshot);
+
   return (
     <section className="workspace-grid single-column">
-      <section className="thread-card">
+      <section className="panel-card">
         <div className="thread-actions">
           <div>
-            <p className="eyebrow">Quote export</p>
+            <p className="eyebrow">Exportación</p>
             <h2>{exportSnapshot.tripLabel}</h2>
             <p className="muted">{exportSnapshot.summary}</p>
           </div>
           <div className="card-actions">
             <a className="primary-button" href={pdfPath}>
-              Download PDF
+              Descargar PDF
             </a>
           </div>
         </div>
 
         <div className="summary-metrics">
           <div>
-            <span>Agency</span>
+            <span>Agencia</span>
             <strong>{exportSnapshot.agencyName}</strong>
           </div>
           <div>
-            <span>Version</span>
+            <span>Versión</span>
             <strong>v{quoteExport.activeQuoteVersion}</strong>
           </div>
           <div>
-            <span>Created</span>
-            <strong>{new Date(quoteExport.createdAt).toLocaleString()}</strong>
+            <span>Generado</span>
+            <strong>{formatUiDateTime(quoteExport.createdAt)}</strong>
           </div>
           <div>
-            <span>Artifact</span>
+            <span>Archivo</span>
             <strong>{quoteExport.fileName}</strong>
           </div>
           <div>
-            <span>Size</span>
+            <span>Tamaño</span>
             <strong>{formatFileSize(quoteExport.fileSizeBytes)}</strong>
           </div>
         </div>
 
-        <div className="results-section">
-          <div className="section-header">
-            <div>
-              <p className="eyebrow">Selected bundle</p>
-              <h3>Frozen export state</h3>
-            </div>
-          </div>
+        <p className="muted">
+          Este artefacto usa el mismo modelo de propuesta activa, pero congelado
+          en la versión exportada para evitar drift visual o comercial.
+        </p>
+      </section>
 
-          <div className="shortlist-grid">
-            {exportSnapshot.selectedItems.map((item) => (
-              <article className="shortlist-card" key={item.id}>
-                <header className="shortlist-header">
-                  <div>
-                    <p className="eyebrow">{item.serviceLine}</p>
-                    <h3>{item.title}</h3>
-                  </div>
-                  <strong>
-                    {item.currency} {item.headlinePrice}
-                  </strong>
-                </header>
-                <ul className="card-list">
-                  <li>{item.whyItFits}</li>
-                  <li>{item.tradeoff}</li>
-                  {item.caveat ? <li>{item.caveat}</li> : null}
-                </ul>
-              </article>
-            ))}
+      <ActiveQuoteReview quote={activeQuoteView} />
+
+      <section className="panel-card">
+        <div className="panel-card-header">
+          <div>
+            <p className="eyebrow">Estado congelado</p>
+            <h3>Resumen del export</h3>
           </div>
         </div>
-
-        <section className="rail-card">
-          <p className="eyebrow">Snapshot summary</p>
-          <p className="muted">{exportSnapshot.confirmedStateSummary}</p>
-          <ul className="status-list">
-            <li>
-              <span>Status at export</span>
-              <strong>{exportSnapshot.status}</strong>
-            </li>
-            <li>
-              <span>Commercial</span>
-              <strong>{exportSnapshot.commercialStatus}</strong>
-            </li>
-            <li>
-              <span>Recommendation mode</span>
-              <strong>{exportSnapshot.recommendationMode}</strong>
-            </li>
-            <li>
-              <span>Total</span>
-              <strong>
-                {exportSnapshot.bundleReview.currency}{" "}
-                {exportSnapshot.bundleReview.totalPrice}
-              </strong>
-            </li>
-            <li>
-              <span>Storage path</span>
-              <strong>{quoteExport.storagePath}</strong>
-            </li>
+        <p className="muted">{exportSnapshot.confirmedStateSummary}</p>
+        <ul className="status-list">
+          <li>
+            <span>Estado al exportar</span>
+            <strong>{quoteStateUiLabels[exportSnapshot.status]}</strong>
+          </li>
+          <li>
+            <span>Comercial</span>
+            <strong>
+              {commercialStatusUiLabels[exportSnapshot.commercialStatus]}
+            </strong>
+          </li>
+          <li>
+            <span>Modo</span>
+            <strong>
+              {recommendationModeUiLabels[exportSnapshot.recommendationMode]}
+            </strong>
+          </li>
+          <li>
+            <span>Total</span>
+            <strong>
+              {exportSnapshot.bundleReview.currency}{" "}
+              {exportSnapshot.bundleReview.totalPrice}
+            </strong>
+          </li>
+        </ul>
+        {exportSnapshot.bundleReview.warnings.length > 0 ? (
+          <p className="eyebrow">Advertencias</p>
+        ) : null}
+        {exportSnapshot.bundleReview.warnings.length > 0 ? (
+          <ul className="card-list">
+            {exportSnapshot.bundleReview.warnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
           </ul>
-          {exportSnapshot.bundleReview.warnings.length > 0 ? (
-            <>
-              <p className="eyebrow">Warnings</p>
-              <ul className="card-list">
-                {exportSnapshot.bundleReview.warnings.map((warning) => (
-                  <li key={warning}>{warning}</li>
-                ))}
-              </ul>
-            </>
-          ) : null}
-        </section>
+        ) : null}
+        <p className="muted">
+          El export no cambia por sí solo el estado comercial del caso.
+        </p>
       </section>
     </section>
   );

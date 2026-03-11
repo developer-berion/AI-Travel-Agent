@@ -27,4 +27,16 @@ describe("quote state machine", () => {
       true,
     );
   });
+
+  it("allows continuity commands required by the workbench views", () => {
+    expect(assertCommandAllowed("archived", "restore_quote_session")).toBe(
+      true,
+    );
+    expect(
+      assertCommandAllowed("reviewing", "confirm_recommendation_mode"),
+    ).toBe(true);
+    expect(assertCommandAllowed("export_ready", "request_more_options")).toBe(
+      true,
+    );
+  });
 });

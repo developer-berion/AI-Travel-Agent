@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -21,29 +22,49 @@ export default async function WorkspaceLayout({
       <SessionSidebar sessions={sessions} />
       <main className="workspace-main">
         <header className="topbar">
-          <div>
-            <p className="eyebrow">Operator workspace</p>
-            <h1>Alana Travel Quoting OS</h1>
-          </div>
-          <div className="topbar-actions">
-            <div className="topbar-meta">
-              <span>{operator.fullName}</span>
-              <span className="status-pill">
-                {runtimeConfig.AUTH_MODE === "mock"
-                  ? "Mock auth"
-                  : "Supabase auth"}
-              </span>
-              <span className="status-pill">
-                {runtimeConfig.QUOTE_REPOSITORY_MODE === "mock"
-                  ? "Mock repository"
-                  : "Supabase repository"}
-              </span>
-              <span className="status-pill">
-                {runtimeConfig.AI_PROVIDER === "mock"
-                  ? "Mock orchestration"
-                  : runtimeConfig.OPENAI_MODEL}
-              </span>
+          <Link className="topbar-brand" href="/quotes">
+            <span className="topbar-brand-mark" aria-hidden="true">
+              AL
+            </span>
+            <div className="topbar-copy">
+              <p className="eyebrow">Alana AI</p>
+              <h1>Workspace de cotizaciones</h1>
             </div>
+          </Link>
+          <div className="topbar-actions">
+            <details className="runtime-panel">
+              <summary>Entorno</summary>
+              <div className="runtime-panel-body">
+                <p className="eyebrow">Diagnóstico técnico</p>
+                <ul className="runtime-panel-list">
+                  <li>
+                    <span>Acceso</span>
+                    <strong>
+                      {runtimeConfig.AUTH_MODE === "mock"
+                        ? "Simulado"
+                        : "Supabase"}
+                    </strong>
+                  </li>
+                  <li>
+                    <span>Repositorio</span>
+                    <strong>
+                      {runtimeConfig.QUOTE_REPOSITORY_MODE === "mock"
+                        ? "Simulado"
+                        : "Supabase"}
+                    </strong>
+                  </li>
+                  <li>
+                    <span>IA</span>
+                    <strong>
+                      {runtimeConfig.AI_PROVIDER === "mock"
+                        ? "Simulada"
+                        : runtimeConfig.OPENAI_MODEL}
+                    </strong>
+                  </li>
+                </ul>
+              </div>
+            </details>
+            <span className="operator-chip">{operator.fullName}</span>
             <ThemeToggle />
           </div>
         </header>

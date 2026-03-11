@@ -34,9 +34,11 @@ const baseOptions = (serviceLine: ServiceLine, destination: string) => {
           ? "Tiene menos flexibilidad de horario que la opcion premium."
           : "Tiene inventario mas estrecho que actividades de catalogo amplio.",
     caveat:
-      serviceLine === "activity"
-        ? "La disponibilidad de activities es mas volatil y puede requerir reconfirmacion."
-        : null,
+      serviceLine === "hotel"
+        ? "Taxes due at check-in."
+        : serviceLine === "activity"
+          ? "La disponibilidad de activities es mas volatil y puede requerir reconfirmacion."
+          : null,
     availabilityState:
       serviceLine === "hotel" ? "recheck_required" : "available",
     supplierMetadata: {

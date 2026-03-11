@@ -1,9 +1,11 @@
 import type {
   AuditEvent,
+  OperatorNote,
   QuoteExport,
   QuoteExportSnapshot,
   QuoteMessage,
   QuoteSession,
+  QuoteVersion,
 } from "@alana/domain";
 import { createId, nowIso } from "@alana/shared";
 
@@ -12,6 +14,8 @@ import type { QuoteRecord, QuoteRepository } from "./context-package";
 type Store = {
   exports: Map<string, QuoteExport>;
   exportSnapshots: Map<string, QuoteExportSnapshot>;
+  operatorNotes: Map<string, OperatorNote>;
+  quoteVersions: Map<string, QuoteVersion[]>;
   records: Map<string, QuoteRecord>;
 };
 
@@ -24,6 +28,8 @@ const getStore = (): Store => {
   if (!globalStore[key]) {
     globalStore[key] = {
       exports: new Map<string, QuoteExport>(),
+      operatorNotes: new Map<string, OperatorNote>(),
+      quoteVersions: new Map<string, QuoteVersion[]>(),
       records: new Map<string, QuoteRecord>(),
       exportSnapshots: new Map<string, QuoteExportSnapshot>(),
     };
@@ -63,6 +69,8 @@ export const createMockQuoteRepository = (): QuoteRepository => {
         selectedItems: [],
         shortlists: [],
         auditEvents: [],
+        operatorNote: null,
+        quoteVersions: [],
       };
 
       store.records.set(record.session.id, record);
@@ -75,7 +83,17 @@ export const createMockQuoteRepository = (): QuoteRepository => {
         .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
     },
     getRecord(quoteSessionId) {
-      return store.records.get(quoteSessionId) ?? null;
+      const record = store.records.get(quoteSessionId);
+
+      if (!record) {
+        return null;
+      }
+
+      return {
+        ...record,
+        operatorNote: store.operatorNotes.get(quoteSessionId) ?? null,
+        quoteVersions: store.quoteVersions.get(quoteSessionId) ?? [],
+      };
     },
     saveRecord(record) {
       const updatedRecord = {
@@ -88,6 +106,18 @@ export const createMockQuoteRepository = (): QuoteRepository => {
       };
 
       store.records.set(updatedRecord.session.id, updatedRecord);
+      if (updatedRecord.operatorNote) {
+        store.operatorNotes.set(
+          updatedRecord.session.id,
+          updatedRecord.operatorNote,
+        );
+      } else {
+        store.operatorNotes.delete(updatedRecord.session.id);
+      }
+      store.quoteVersions.set(
+        updatedRecord.session.id,
+        updatedRecord.quoteVersions,
+      );
       return updatedRecord;
     },
     appendMessage(message) {

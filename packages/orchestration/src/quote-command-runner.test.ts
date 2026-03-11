@@ -460,4 +460,171 @@ describe("quote command runner", () => {
 
     expect(storedRecord?.session.tripStartDate).toBe("2026-05-01");
   });
+
+  it("saves operator notes and updates the recommendation mode on the active version", async () => {
+    const repository = createMockQuoteRepository();
+    const record = await repository.createSession({
+      operatorId: createId(),
+      title: "Notes and mode session",
+      agencyName: "Alana",
+    });
+    const runQuoteCommand = createQuoteCommandRunner({
+      aiRuntime: createMockAiRuntime(),
+    });
+
+    await runQuoteCommand(repository, {
+      commandId: createId(),
+      commandName: "append_operator_message",
+      quoteSessionId: record.session.id,
+      actor: {
+        operatorId: record.session.operatorId,
+        role: "operator",
+      },
+      idempotencyKey: createId(),
+      createdAt: nowIso(),
+      payload: {
+        content:
+          "Need hotel in Madrid from 2026-05-01 to 2026-05-05 for 2 adults",
+      },
+    });
+
+    const optionId = (await repository.getRecord(record.session.id))
+      ?.shortlists[0]?.items[0]?.id;
+
+    await runQuoteCommand(repository, {
+      commandId: createId(),
+      commandName: "select_option_for_cart",
+      quoteSessionId: record.session.id,
+      actor: {
+        operatorId: record.session.operatorId,
+        role: "operator",
+      },
+      idempotencyKey: createId(),
+      createdAt: nowIso(),
+      payload: {
+        optionId,
+      },
+    });
+
+    await runQuoteCommand(repository, {
+      commandId: createId(),
+      commandName: "save_operator_note",
+      quoteSessionId: record.session.id,
+      actor: {
+        operatorId: record.session.operatorId,
+        role: "operator",
+      },
+      idempotencyKey: createId(),
+      createdAt: nowIso(),
+      payload: {
+        content: "Internal note for follow-up.",
+      },
+    });
+
+    await runQuoteCommand(repository, {
+      commandId: createId(),
+      commandName: "confirm_recommendation_mode",
+      quoteSessionId: record.session.id,
+      actor: {
+        operatorId: record.session.operatorId,
+        role: "operator",
+      },
+      idempotencyKey: createId(),
+      createdAt: nowIso(),
+      payload: {
+        recommendationMode: "three_options",
+      },
+    });
+
+    const storedRecord = await repository.getRecord(record.session.id);
+
+    expect(storedRecord?.operatorNote?.content).toBe(
+      "Internal note for follow-up.",
+    );
+    expect(storedRecord?.session.recommendationMode).toBe("three_options");
+    expect(storedRecord?.quoteVersions[0]?.versionState).toBe("active");
+  });
+
+  it("archives and restores a session while keeping continuity state available", async () => {
+    const repository = createMockQuoteRepository();
+    const record = await repository.createSession({
+      operatorId: createId(),
+      title: "Archive and restore session",
+      agencyName: "Alana",
+    });
+    const runQuoteCommand = createQuoteCommandRunner({
+      aiRuntime: createMockAiRuntime(),
+    });
+
+    await runQuoteCommand(repository, {
+      commandId: createId(),
+      commandName: "append_operator_message",
+      quoteSessionId: record.session.id,
+      actor: {
+        operatorId: record.session.operatorId,
+        role: "operator",
+      },
+      idempotencyKey: createId(),
+      createdAt: nowIso(),
+      payload: {
+        content:
+          "Need hotel in Madrid from 2026-05-01 to 2026-05-05 for 2 adults",
+      },
+    });
+
+    const optionId = (await repository.getRecord(record.session.id))
+      ?.shortlists[0]?.items[0]?.id;
+
+    await runQuoteCommand(repository, {
+      commandId: createId(),
+      commandName: "select_option_for_cart",
+      quoteSessionId: record.session.id,
+      actor: {
+        operatorId: record.session.operatorId,
+        role: "operator",
+      },
+      idempotencyKey: createId(),
+      createdAt: nowIso(),
+      payload: {
+        optionId,
+      },
+    });
+
+    await runQuoteCommand(repository, {
+      commandId: createId(),
+      commandName: "archive_quote_session",
+      quoteSessionId: record.session.id,
+      actor: {
+        operatorId: record.session.operatorId,
+        role: "operator",
+      },
+      idempotencyKey: createId(),
+      createdAt: nowIso(),
+      payload: {},
+    });
+
+    const restoreResult = await runQuoteCommand(repository, {
+      commandId: createId(),
+      commandName: "restore_quote_session",
+      quoteSessionId: record.session.id,
+      actor: {
+        operatorId: record.session.operatorId,
+        role: "operator",
+      },
+      idempotencyKey: createId(),
+      createdAt: nowIso(),
+      payload: {},
+    });
+
+    const storedRecord = await repository.getRecord(record.session.id);
+
+    expect(storedRecord?.session.status).toBe("export_ready");
+    expect(storedRecord?.session.commercialStatus).toBe("en_seguimiento");
+    expect(restoreResult.viewModelDelta).toHaveProperty("workspaceCase");
+    expect(
+      storedRecord?.auditEvents.some(
+        (event) => event.eventName === "quote_session_restored",
+      ),
+    ).toBe(true);
+  });
 });

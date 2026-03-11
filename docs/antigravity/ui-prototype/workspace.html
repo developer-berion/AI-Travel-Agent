@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es" class="antialiased">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alana AI - Workspace</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            primary: {
+              DEFAULT: '#8A5A9E',
+              hover: '#7A4A8E',
+              soft: '#F4F0F6',
+              darkSoft: '#2D2034',
+              text: '#6A3A7E'
+            },
+            pastel: {
+              red: '#FFE5E5',
+              redText: '#D94040',
+              yellow: '#FFF3CD',
+              yellowText: '#D99A2B',
+              green: '#E5F6DF',
+              greenText: '#4A9B3E',
+              blue: '#E5F0FF',
+              blueText: '#3A7BD5'
+            },
+            dark: {
+              bg: '#121212',
+              surface: '#1E1E1E',
+              border: '#2A2A2A',
+              text: '#E0E0E0',
+              muted: '#888888'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 4px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; }
+  </style>
+</head>
+<body class="bg-[#fafafa] dark:bg-dark-bg text-gray-800 dark:text-gray-200 transition-colors duration-200 h-screen flex flex-col overflow-hidden">
+
+  <!-- Header -->
+  <header class="h-16 flex items-center justify-between px-6 bg-white dark:bg-dark-surface border-b border-gray-100 dark:border-dark-border z-10">
+    <div class="flex items-center gap-4">
+      <div class="w-10 h-10 rounded-xl bg-primary-soft dark:bg-primary-darkSoft flex items-center justify-center border border-primary/20">
+        <i class="ph-light ph-magic-wand text-xl text-primary"></i>
+      </div>
+      <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Workspace</h1>
+    </div>
+
+    <!-- Right Actions -->
+    <div class="flex items-center gap-3">
+      <!-- Search -->
+      <div class="relative hidden md:block w-64">
+        <i class="ph-light ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+        <input type="text" placeholder="Buscar cliente o cotización..." class="w-full pl-9 pr-3 py-2 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-dark-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary dark:text-white transition-all">
+      </div>
+      
+      <!-- Theme Toggle -->
+      <button onclick="document.documentElement.classList.toggle('dark')" class="w-10 h-10 rounded-xl hover:bg-gray-50 dark:hover:bg-[#2d2d2d] flex items-center justify-center text-gray-400 transition-colors">
+        <i class="ph-light ph-moon text-xl dark:hidden"></i>
+        <i class="ph-light ph-sun text-xl hidden dark:block"></i>
+      </button>
+
+      <!-- Profile -->
+      <div class="h-10 px-3 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-[#2d2d2d] border border-gray-200 dark:border-dark-border cursor-pointer hover:bg-gray-100 dark:hover:bg-[#333] transition-colors gap-2 ml-2">
+         <div class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-semibold">
+           V
+         </div>
+         <span class="text-sm font-medium text-gray-700 dark:text-gray-200 hidden sm:block">Victor</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 overflow-hidden flex flex-col md:flex-row max-w-7xl mx-auto w-full p-4 gap-6">
+    
+    <!-- Left Column (Filters & Quick Actions) -->
+    <aside class="w-full md:w-64 flex flex-col gap-6 shrink-0">
+      
+      <button onclick="window.location.href='index.html'" class="w-full bg-primary hover:bg-primary-hover text-white py-3 px-4 rounded-xl text-[15px] font-medium transition-all shadow-sm flex items-center justify-center gap-2">
+        <i class="ph-light ph-plus text-lg"></i>
+        Nueva Cotización
+      </button>
+
+      <div>
+        <h3 class="text-[11px] font-semibold text-gray-400 tracking-widest uppercase mb-3 px-1">Filtros de Bandeja</h3>
+        <nav class="space-y-1">
+          <a href="#" class="flex items-center justify-between px-3 py-2.5 rounded-xl bg-gray-100 dark:bg-dark-surface text-gray-800 dark:text-white font-medium transition-colors">
+            <div class="flex items-center gap-2.5">
+              <i class="ph-light ph-tray text-xl"></i>
+              <span class="text-sm">Mis Casos Activos</span>
+            </div>
+            <span class="bg-gray-200 dark:bg-[#333] text-gray-600 dark:text-gray-300 text-xs px-2 py-0.5 rounded-full">3</span>
+          </a>
+          <a href="#" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-surface/50 font-medium transition-colors">
+            <div class="flex items-center gap-2.5">
+              <i class="ph-light ph-lightning text-xl"></i>
+              <span class="text-sm">Nuevos Leads</span>
+            </div>
+            <span class="bg-primary/10 text-primary-text dark:text-primary text-xs px-2 py-0.5 rounded-full">1</span>
+          </a>
+          <a href="#" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-surface/50 font-medium transition-colors">
+            <div class="flex items-center gap-2.5">
+              <i class="ph-light ph-check-circle text-xl"></i>
+              <span class="text-sm">Enviados (Cerrados)</span>
+            </div>
+          </a>
+          <a href="#" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-surface/50 font-medium transition-colors">
+            <div class="flex items-center gap-2.5">
+              <i class="ph-light ph-archive text-xl"></i>
+              <span class="text-sm">Archivados</span>
+            </div>
+          </a>
+        </nav>
+      </div>
+
+    </aside>
+
+    <!-- Right Column (Inbox List) -->
+    <section class="flex-1 flex flex-col overflow-hidden bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-3xl shadow-sm">
+      
+      <!-- Toolbar -->
+      <div class="p-4 border-b border-gray-100 dark:border-dark-border flex justify-between items-center">
+        <h2 class="text-lg font-medium text-gray-800 dark:text-white">Mis Casos Activos</h2>
+        <div class="flex gap-2">
+           <button class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-800 dark:text-dark-muted dark:hover:text-white hover:bg-gray-50 dark:hover:bg-[#2d2d2d] transition-colors border border-transparent hover:border-gray-200 dark:hover:border-dark-border flex items-center gap-2">
+             <i class="ph-light ph-funnel"></i> Filtrar
+           </button>
+           <button class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-800 dark:text-dark-muted dark:hover:text-white hover:bg-gray-50 dark:hover:bg-[#2d2d2d] transition-colors border border-transparent hover:border-gray-200 dark:hover:border-dark-border flex items-center gap-2">
+             <i class="ph-light ph-sort-descending"></i> Ordenar
+           </button>
+        </div>
+      </div>
+
+      <!-- List -->
+      <div class="flex-1 overflow-y-auto custom-scrollbar p-2 relative">
+        
+        <!-- Toggle Demo States Button (For presentation) -->
+        <div class="absolute top-2 right-2 flex gap-2 z-10">
+          <button onclick="document.getElementById('list-content').classList.toggle('hidden'); document.getElementById('empty-state').classList.toggle('hidden');" class="text-[10px] bg-gray-100 hover:bg-gray-200 dark:bg-[#333] dark:hover:bg-[#444] text-gray-500 dark:text-gray-300 px-2 py-1 rounded">Toggle Empty state</button>
+          <button onclick="document.getElementById('list-content').classList.toggle('hidden'); document.getElementById('loading-state').classList.toggle('hidden');" class="text-[10px] bg-gray-100 hover:bg-gray-200 dark:bg-[#333] dark:hover:bg-[#444] text-gray-500 dark:text-gray-300 px-2 py-1 rounded">Toggle Loading state</button>
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden h-full flex flex-col items-center justify-center p-8 text-center animate-fade-in">
+          <div class="w-16 h-16 rounded-full bg-gray-50 dark:bg-[#2d2d2d] border-2 border-dashed border-gray-200 dark:border-dark-border flex items-center justify-center text-gray-400 mb-4">
+            <i class="ph-light ph-tray text-3xl"></i>
+          </div>
+          <h3 class="text-lg font-medium text-gray-800 dark:text-gray-200">No hay casos activos</h3>
+          <p class="text-sm font-light text-gray-500 dark:text-gray-400 mt-2 max-w-sm">Tu bandeja de entrada está limpia. Puedes relajar tu mente o empezar una nueva cotización.</p>
+          <button onclick="window.location.href='index.html'" class="mt-6 bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-[#2d2d2d] text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-dark-border py-2 px-4 rounded-xl text-sm font-medium transition-all shadow-sm">
+            Iniciar nueva cotización
+          </button>
+        </div>
+
+        <!-- Loading Skeletons -->
+        <div id="loading-state" class="hidden space-y-4 p-2 animate-pulse">
+          <div class="h-32 bg-gray-50 dark:bg-[#202020] rounded-2xl border border-gray-100 dark:border-dark-border p-4">
+             <div class="flex justify-between items-start mb-4">
+               <div class="flex items-center gap-3 w-1/2">
+                 <div class="h-5 w-3/4 bg-gray-200 dark:bg-[#333] rounded-md"></div>
+                 <div class="h-5 w-1/4 bg-gray-200 dark:bg-[#333] rounded-md"></div>
+               </div>
+               <div class="h-3 w-16 bg-gray-200 dark:bg-[#333] rounded-md"></div>
+             </div>
+             <div class="flex gap-4 mb-4">
+                <div class="h-4 w-32 bg-gray-200 dark:bg-[#333] rounded-md"></div>
+                <div class="h-4 w-24 bg-gray-200 dark:bg-[#333] rounded-md"></div>
+             </div>
+             <div class="h-3 w-full bg-gray-200 dark:bg-[#333] rounded-md mt-2"></div>
+          </div>
+          <div class="h-32 bg-gray-50 dark:bg-[#202020] rounded-2xl border border-gray-100 dark:border-dark-border p-4">
+             <div class="flex justify-between items-start mb-4">
+               <div class="flex items-center gap-3 w-1/2">
+                 <div class="h-5 w-1/2 bg-gray-200 dark:bg-[#333] rounded-md"></div>
+               </div>
+               <div class="h-3 w-16 bg-gray-200 dark:bg-[#333] rounded-md"></div>
+             </div>
+             <div class="flex gap-4 mb-4">
+                <div class="h-4 w-40 bg-gray-200 dark:bg-[#333] rounded-md"></div>
+                <div class="h-4 w-20 bg-gray-200 dark:bg-[#333] rounded-md"></div>
+             </div>
+             <div class="h-3 w-5/6 bg-gray-200 dark:bg-[#333] rounded-md mt-2"></div>
+          </div>
+        </div>
+
+        <!-- Actual List Content -->
+        <div id="list-content">
+          <!-- Case Item: Action Required -->
+        <a href="index.html" class="block p-4 mx-2 my-2 rounded-2xl border border-pastel-yellow/50 dark:border-yellow-900/30 bg-pastel-yellow/10 dark:bg-yellow-900/10 hover:bg-pastel-yellow/20 dark:hover:bg-yellow-900/20 transition-all cursor-pointer group">
+          <div class="flex justify-between items-start mb-2">
+            <div class="flex items-center gap-3">
+              <h3 class="font-medium text-gray-900 dark:text-white text-[15px] group-hover:text-primary transition-colors">Viaje a Madrid</h3>
+              <span class="inline-flex items-center gap-1.5 bg-pastel-yellow/30 dark:bg-yellow-900/20 text-pastel-yellowText dark:text-yellow-500 px-2.5 py-1 rounded-lg text-[11px] font-semibold border border-pastel-yellow/50 dark:border-yellow-900/30">
+                <i class="ph-light ph-warning-circle"></i> Acción Requerida
+              </span>
+            </div>
+            <span class="text-xs text-gray-400 dark:text-dark-muted">Hace 10 min</span>
+          </div>
+          <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-dark-muted font-light mb-3">
+            <span class="flex items-center gap-1"><i class="ph-light ph-calendar"></i> 1 May - 5 May, 2026</span>
+            <span class="flex items-center gap-1"><i class="ph-light ph-users"></i> 2 Adultos</span>
+          </div>
+          <p class="text-[13px] text-gray-600 dark:text-gray-400 leading-relaxed max-w-3xl line-clamp-1">
+            <span class="font-medium text-primary-text dark:text-primary">Alana:</span> He iniciado la cotización. La búsqueda de hoteles está completa, pero necesito una aclaración para el traslado.
+          </p>
+        </a>
+
+        <!-- Case Item: Drafting -->
+        <a href="index.html" class="block p-4 mx-2 my-2 rounded-2xl border border-gray-100 dark:border-dark-border hover:border-gray-200 dark:hover:border-gray-700 bg-white dark:bg-[#202020] hover:bg-gray-50 dark:hover:bg-[#252525] transition-all cursor-pointer group">
+          <div class="flex justify-between items-start mb-2">
+            <div class="flex items-center gap-3">
+              <h3 class="font-medium text-gray-900 dark:text-white text-[15px] group-hover:text-primary transition-colors">Luna de miel en Bali</h3>
+              <span class="inline-flex items-center gap-1.5 bg-gray-100 dark:bg-[#333] text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-lg text-[11px] font-semibold">
+                Borrador
+              </span>
+            </div>
+            <span class="text-xs text-gray-400 dark:text-dark-muted">Ayer</span>
+          </div>
+          <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-dark-muted font-light mb-3">
+            <span class="flex items-center gap-1"><i class="ph-light ph-calendar"></i> Pendiente confirmación</span>
+            <span class="flex items-center gap-1"><i class="ph-light ph-users"></i> 2 Adultos</span>
+          </div>
+          <p class="text-[13px] text-gray-600 dark:text-gray-400 leading-relaxed max-w-3xl line-clamp-1">
+            <span class="font-medium text-gray-800 dark:text-gray-200">Tú:</span> Estamos esperando que el cliente nos confirme si finalmente viaja en Julio o Agosto.
+          </p>
+        </a>
+
+        <!-- Case Item: Ready to export -->
+        <a href="index.html" class="block p-4 mx-2 my-2 rounded-2xl border border-pastel-green/50 dark:border-green-900/30 bg-white dark:bg-[#202020] hover:border-pastel-green hover:bg-gray-50 dark:hover:bg-[#252525] transition-all cursor-pointer group">
+          <div class="flex justify-between items-start mb-2">
+            <div class="flex items-center gap-3">
+              <h3 class="font-medium text-gray-900 dark:text-white text-[15px] group-hover:text-primary transition-colors">Viaje de negocios a Londres</h3>
+              <span class="inline-flex items-center gap-1.5 bg-pastel-green/20 dark:bg-green-900/20 text-pastel-greenText dark:text-green-400 border border-pastel-green dark:border-green-900/30 px-2.5 py-1 rounded-lg text-[11px] font-semibold">
+                Lista para exportar
+              </span>
+            </div>
+            <span class="text-xs text-gray-400 dark:text-dark-muted">Hace 2 días</span>
+          </div>
+          <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-dark-muted font-light mb-3">
+            <span class="flex items-center gap-1"><i class="ph-light ph-calendar"></i> 10 Oct - 14 Oct, 2026</span>
+            <span class="flex items-center gap-1"><i class="ph-light ph-users"></i> 1 Adulto</span>
+            <span class="flex items-center gap-1 text-gray-700 dark:text-gray-300 font-medium">USD 1,250</span>
+          </div>
+          <p class="text-[13px] text-gray-600 dark:text-gray-400 leading-relaxed max-w-3xl line-clamp-1">
+            <span class="font-medium text-primary-text dark:text-primary">Alana:</span> La cotización final ha sido generada y está lista para revisión en PDF.
+          </p>
+        </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+</body>
+</html>

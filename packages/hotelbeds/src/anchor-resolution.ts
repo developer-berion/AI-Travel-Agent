@@ -162,6 +162,14 @@ const destinationRegistry: DestinationAnchorConfig[] = [
       },
     ],
   },
+  {
+    activityDestinationCode: "SMV",
+    aliases: ["smallville"],
+    canonicalName: "Smallville",
+    hotelDestinationCode: "SMV",
+    transferAirports: [],
+    transferLocations: [],
+  },
 ];
 
 const normalizeText = (value: string) =>

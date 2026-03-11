@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Alana UXUI Visual Testing Checklist</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #eef3f7;
+        --panel: #ffffff;
+        --ink: #112031;
+        --muted: #546275;
+        --line: #d5dee8;
+        --accent: #0f4da8;
+        --accent-soft: #dce9ff;
+        --danger: #b74232;
+        --danger-soft: #fde9e6;
+        --warn: #8a5a09;
+        --warn-soft: #f8ecd5;
+        --ok: #196746;
+        --ok-soft: #dbf1e7;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at top left, rgba(15, 77, 168, 0.08), transparent 28rem),
+          linear-gradient(180deg, #f5f8fb 0%, var(--bg) 100%);
+        color: var(--ink);
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.5;
+      }
+
+      main {
+        width: min(1180px, calc(100% - 32px));
+        margin: 28px auto 56px;
+      }
+
+      .hero,
+      .section {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        box-shadow: 0 20px 48px rgba(17, 32, 49, 0.08);
+      }
+
+      .hero {
+        padding: 28px;
+        margin-bottom: 18px;
+      }
+
+      .section {
+        padding: 24px;
+        margin-top: 16px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0 0 10px;
+      }
+
+      p,
+      li,
+      label,
+      summary,
+      td,
+      th {
+        color: var(--muted);
+      }
+
+      .eyebrow {
+        display: inline-block;
+        margin-bottom: 10px;
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .pill {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .pill.ok {
+        background: var(--ok-soft);
+        color: var(--ok);
+      }
+
+      .pill.warn {
+        background: var(--warn-soft);
+        color: var(--warn);
+      }
+
+      .pill.danger {
+        background: var(--danger-soft);
+        color: var(--danger);
+      }
+
+      .meta,
+      .legend,
+      .scenario-grid {
+        display: grid;
+        gap: 14px;
+      }
+
+      .meta {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        margin-top: 18px;
+      }
+
+      .meta-card,
+      .legend-card,
+      .scenario-card {
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: #fbfdff;
+        padding: 16px;
+      }
+
+      .legend {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        margin-top: 16px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 14px;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        padding: 12px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        color: var(--ink);
+        font-size: 13px;
+      }
+
+      .scenario-grid {
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        margin-top: 18px;
+      }
+
+      .scenario-card h3 {
+        font-size: 18px;
+      }
+
+      .checklist {
+        list-style: none;
+        padding: 0;
+        margin: 14px 0 0;
+      }
+
+      .checklist li + li {
+        margin-top: 10px;
+      }
+
+      .checklist label {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+      }
+
+      input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        margin-top: 2px;
+        accent-color: var(--accent);
+        flex: 0 0 auto;
+      }
+
+      .note {
+        margin-top: 16px;
+        padding: 14px 16px;
+        border-radius: 16px;
+        border: 1px solid #e7d4b1;
+        background: var(--warn-soft);
+        color: #6f4e1f;
+      }
+
+      .danger-note {
+        margin-top: 16px;
+        padding: 14px 16px;
+        border-radius: 16px;
+        border: 1px solid #efc2ba;
+        background: var(--danger-soft);
+        color: #7d352a;
+      }
+
+      .evidence {
+        margin-top: 14px;
+        border-top: 1px dashed var(--line);
+        padding-top: 14px;
+      }
+
+      code,
+      a {
+        color: var(--accent);
+      }
+
+      .footer-note {
+        margin-top: 20px;
+        font-size: 14px;
+      }
+
+      @media (max-width: 720px) {
+        main {
+          width: min(100%, calc(100% - 20px));
+          margin: 16px auto 28px;
+        }
+
+        .hero,
+        .section {
+          padding: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="hero">
+        <span class="pill ok">UXUI audit pack</span>
+        <h1>Alana UXUI visual testing checklist</h1>
+        <p>
+          Usa este checklist para ejecutar la revision visual del workbench
+          operator-facing. El objetivo no es solo detectar bugs de UI, sino
+          validar jerarquia visual, lectura, consistencia de copy, densidad
+          operativa, manejo de estados y calidad responsive.
+        </p>
+
+        <div class="meta">
+          <div class="meta-card">
+            <strong>Fecha base</strong><br />
+            2026-03-10
+          </div>
+          <div class="meta-card">
+            <strong>Entorno principal</strong><br />
+            <code>mock</code> local
+          </div>
+          <div class="meta-card">
+            <strong>Entorno secundario</strong><br />
+            staging solo para spot-check visual
+          </div>
+          <div class="meta-card">
+            <strong>Breakpoints obligatorios</strong><br />
+            1440, 1280, 1024, 390
+          </div>
+          <div class="meta-card">
+            <strong>Temas obligatorios</strong><br />
+            light y dark
+          </div>
+          <div class="meta-card">
+            <strong>Evidencia minima</strong><br />
+            screenshot completo, hallazgo, severidad, impacto y recomendacion
+          </div>
+        </div>
+
+        <div class="note">
+          Regla central: un mismo surface no debe mezclar espanol e ingles,
+          no debe filtrar wording tecnico y no debe repetir el mismo resumen
+          en varias capas si no agrega valor nuevo.
+        </div>
+      </section>
+
+      <section class="section">
+        <span class="eyebrow">Severity</span>
+        <h2>Criterio de severidad</h2>
+        <div class="legend">
+          <div class="legend-card">
+            <span class="pill danger">P1</span>
+            <p>Bloquea lectura, confianza o accion.</p>
+          </div>
+          <div class="legend-card">
+            <span class="pill warn">P2</span>
+            <p>Degrada fuerte la comprension, velocidad o confianza.</p>
+          </div>
+          <div class="legend-card">
+            <span class="pill ok">P3</span>
+            <p>Inconsistencia o deuda visual no bloqueante.</p>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Escenario</th>
+              <th>Surface principal</th>
+              <th>Evidencia base</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>S1</code></td>
+              <td>Empty login + theme toggle</td>
+              <td>Login</td>
+              <td><a href="./assets/uxui-visual-audit-2026-03-10/login-page.png">login-page.png</a></td>
+            </tr>
+            <tr>
+              <td><code>S2</code></td>
+              <td>Workspace vacio</td>
+              <td>Workspace empty state</td>
+              <td><a href="./assets/uxui-visual-audit-2026-03-10/workspace-empty.png">workspace-empty.png</a></td>
+            </tr>
+            <tr>
+              <td><code>S3</code></td>
+              <td>Nueva cotizacion en draft</td>
+              <td>Conversation draft</td>
+              <td><a href="./assets/uxui-visual-audit-2026-03-10/conversation-empty.png">conversation-empty.png</a></td>
+            </tr>
+            <tr>
+              <td><code>S4</code></td>
+              <td>Cotizacion parcial con bloqueo</td>
+              <td>Conversation partial</td>
+              <td><a href="./assets/uxui-visual-audit-2026-03-10/conversation-partial.png">conversation-partial.png</a></td>
+            </tr>
+            <tr>
+              <td><code>S5</code></td>
+              <td>Comparacion de dos hoteles</td>
+              <td>Compare tray</td>
+              <td><a href="./assets/uxui-visual-audit-2026-03-10/conversation-compare.png">conversation-compare.png</a></td>
+            </tr>
+            <tr>
+              <td><code>S6</code></td>
+              <td>Quote activo parcial</td>
+              <td>Quote review</td>
+              <td><a href="./assets/uxui-visual-audit-2026-03-10/quote-review.png">quote-review.png</a></td>
+            </tr>
+            <tr>
+              <td><code>S7</code></td>
+              <td>Case sheet con notas internas</td>
+              <td>Case sheet</td>
+              <td><a href="./assets/uxui-visual-audit-2026-03-10/case-sheet.png">case-sheet.png</a></td>
+            </tr>
+            <tr>
+              <td><code>S8</code></td>
+              <td>Versiones con diff</td>
+              <td>Versions</td>
+              <td><a href="./assets/uxui-visual-audit-2026-03-10/versions.png">versions.png</a></td>
+            </tr>
+            <tr>
+              <td><code>S9</code></td>
+              <td>Archivo y reactivacion</td>
+              <td>Resume continuity</td>
+              <td><a href="./assets/uxui-visual-audit-2026-03-10/resume-continuity.png">resume-continuity.png</a></td>
+            </tr>
+            <tr>
+              <td><code>S10</code></td>
+              <td>Export happy path</td>
+              <td>Export review</td>
+              <td><a href="./assets/uxui-visual-audit-2026-03-10/export-happy-path.png">export-happy-path.png</a></td>
+            </tr>
+            <tr>
+              <td><code>S11</code></td>
+              <td>Export bloqueado</td>
+              <td>Error treatment</td>
+              <td><a href="./assets/uxui-visual-audit-2026-03-10/export-blocked-error.png">export-blocked-error.png</a></td>
+            </tr>
+            <tr>
+              <td><code>S12</code></td>
+              <td>Responsive + dark mode</td>
+              <td>Conversation mobile/tablet</td>
+              <td>
+                <a href="./assets/uxui-visual-audit-2026-03-10/conversation-mobile.png">conversation-mobile.png</a>,
+                <a href="./assets/uxui-visual-audit-2026-03-10/conversation-dark-tablet.png">conversation-dark-tablet.png</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section">
+        <span class="eyebrow">Scenarios</span>
+        <h2>Checklist por escenario</h2>
+
+        <div class="scenario-grid">
+          <article class="scenario-card">
+            <span class="pill ok">S1</span>
+            <h3>Login</h3>
+            <ul class="checklist">
+              <li><label><input type="checkbox" /> La jerarquia visual deja claro titulo, contexto y CTA principal.</label></li>
+              <li><label><input type="checkbox" /> Labels, inputs y focus state son legibles.</label></li>
+              <li><label><input type="checkbox" /> El bloque no mezcla espanol e ingles.</label></li>
+              <li><label><input type="checkbox" /> El toggle de tema es visible y entendible.</label></li>
+            </ul>
+            <div class="evidence">
+              Evidencia base:
+              <a href="./assets/uxui-visual-audit-2026-03-10/login-page.png">login-page.png</a>
+            </div>
+          </article>
+
+          <article class="scenario-card">
+            <span class="pill ok">S2</span>
+            <h3>Workspace vacio</h3>
+            <ul class="checklist">
+              <li><label><input type="checkbox" /> Hay una sola narrativa de empty state.</label></li>
+              <li><label><input type="checkbox" /> El CTA principal domina visualmente.</label></li>
+              <li><label><input type="checkbox" /> Sidebar y contenido no repiten el mismo mensaje con igual peso.</label></li>
+            </ul>
+            <div class="evidence">
+              Evidencia base:
+              <a href="./assets/uxui-visual-audit-2026-03-10/workspace-empty.png">workspace-empty.png</a>
+            </div>
+          </article>
+
+          <article class="scenario-card">
+            <span class="pill warn">S3-S4</span>
+            <h3>Conversation draft y parcial</h3>
+            <ul class="checklist">
+              <li><label><input type="checkbox" /> El operador entiende estado, continuidad y siguiente paso sin leer cuatro bloques.</label></li>
+              <li><label><input type="checkbox" /> Las tarjetas del timeline tienen jerarquia distinta segun urgencia.</label></li>
+              <li><label><input type="checkbox" /> El transcript queda subordinado a continuidad.</label></li>
+              <li><label><input type="checkbox" /> El composer explica con claridad que va a pasar al enviar.</label></li>
+            </ul>
+            <div class="evidence">
+              Evidencia base:
+              <a href="./assets/uxui-visual-audit-2026-03-10/conversation-empty.png">conversation-empty.png</a>,
+              <a href="./assets/uxui-visual-audit-2026-03-10/conversation-partial.png">conversation-partial.png</a>
+            </div>
+          </article>
+
+          <article class="scenario-card">
+            <span class="pill warn">S5</span>
+            <h3>Compare</h3>
+            <ul class="checklist">
+              <li><label><input type="checkbox" /> La matriz se escanea rapido y no parece una tabla tecnica.</label></li>
+              <li><label><input type="checkbox" /> `Already active` y `Promote to active quote` no dejan lugar a duda.</label></li>
+              <li><label><input type="checkbox" /> Los 3 a 5 atributos mas importantes dominan el layout.</label></li>
+            </ul>
+            <div class="evidence">
+              Evidencia base:
+              <a href="./assets/uxui-visual-audit-2026-03-10/conversation-compare.png">conversation-compare.png</a>
+            </div>
+          </article>
+
+          <article class="scenario-card">
+            <span class="pill warn">S6</span>
+            <h3>Quote review</h3>
+            <ul class="checklist">
+              <li><label><input type="checkbox" /> La pagina se siente comercial antes que tecnica.</label></li>
+              <li><label><input type="checkbox" /> Resumen, paquete, pricing y caveats tienen jerarquia clara.</label></li>
+              <li><label><input type="checkbox" /> `Compare`, `More options` y `Requote` no compiten con la revision principal.</label></li>
+            </ul>
+            <div class="evidence">
+              Evidencia base:
+              <a href="./assets/uxui-visual-audit-2026-03-10/quote-review.png">quote-review.png</a>
+            </div>
+          </article>
+
+          <article class="scenario-card">
+            <span class="pill ok">S7</span>
+            <h3>Case sheet</h3>
+            <ul class="checklist">
+              <li><label><input type="checkbox" /> Los facts confirmados se distinguen de blockers, supuestos y pendientes.</label></li>
+              <li><label><input type="checkbox" /> El panel de notas internas se entiende como privado y secundario.</label></li>
+              <li><label><input type="checkbox" /> No parece un dump de datos sin curacion visual.</label></li>
+            </ul>
+            <div class="evidence">
+              Evidencia base:
+              <a href="./assets/uxui-visual-audit-2026-03-10/case-sheet.png">case-sheet.png</a>
+            </div>
+          </article>
+
+          <article class="scenario-card">
+            <span class="pill ok">S8</span>
+            <h3>Versions</h3>
+            <ul class="checklist">
+              <li><label><input type="checkbox" /> `Active` y `Superseded` se distinguen al primer vistazo.</label></li>
+              <li><label><input type="checkbox" /> El diff del panel derecho se entiende sin lectura pesada.</label></li>
+              <li><label><input type="checkbox" /> El lenguaje del panel es consistente con el resto del producto.</label></li>
+            </ul>
+            <div class="evidence">
+              Evidencia base:
+              <a href="./assets/uxui-visual-audit-2026-03-10/versions.png">versions.png</a>
+            </div>
+          </article>
+
+          <article class="scenario-card">
+            <span class="pill warn">S9</span>
+            <h3>Archive / reactivate</h3>
+            <ul class="checklist">
+              <li><label><input type="checkbox" /> La continuidad restaurada aparece antes que el transcript.</label></li>
+              <li><label><input type="checkbox" /> El estado de seguimiento se ve claramente.</label></li>
+              <li><label><input type="checkbox" /> No se obliga a releer todo el caso para retomar accion.</label></li>
+            </ul>
+            <div class="evidence">
+              Evidencia base:
+              <a href="./assets/uxui-visual-audit-2026-03-10/resume-continuity.png">resume-continuity.png</a>
+            </div>
+          </article>
+
+          <article class="scenario-card">
+            <span class="pill ok">S10</span>
+            <h3>Export happy path</h3>
+            <ul class="checklist">
+              <li><label><input type="checkbox" /> La vista export se percibe como artefacto compartible y no como admin panel.</label></li>
+              <li><label><input type="checkbox" /> CTA de descarga y metadata principal son claros.</label></li>
+              <li><label><input type="checkbox" /> No se filtran valores internos o storage metadata innecesaria.</label></li>
+            </ul>
+            <div class="evidence">
+              Evidencia base:
+              <a href="./assets/uxui-visual-audit-2026-03-10/export-happy-path.png">export-happy-path.png</a>
+            </div>
+          </article>
+
+          <article class="scenario-card">
+            <span class="pill danger">S11</span>
+            <h3>Export bloqueado</h3>
+            <ul class="checklist">
+              <li><label><input type="checkbox" /> El error explica por que no se puede exportar.</label></li>
+              <li><label><input type="checkbox" /> El mensaje no expone nombres de comando ni wording tecnico.</label></li>
+              <li><label><input type="checkbox" /> El siguiente paso recomendado es claro.</label></li>
+            </ul>
+            <div class="evidence">
+              Evidencia base:
+              <a href="./assets/uxui-visual-audit-2026-03-10/export-blocked-error.png">export-blocked-error.png</a>
+            </div>
+          </article>
+
+          <article class="scenario-card">
+            <span class="pill warn">S12</span>
+            <h3>Responsive + dark mode</h3>
+            <ul class="checklist">
+              <li><label><input type="checkbox" /> En mobile no hay scroll horizontal ni torres de cards imposibles de escanear.</label></li>
+              <li><label><input type="checkbox" /> En tablet la densidad sigue siendo operable.</label></li>
+              <li><label><input type="checkbox" /> Dark mode mantiene jerarquia, contraste y affordances.</label></li>
+            </ul>
+            <div class="evidence">
+              Evidencia base:
+              <a href="./assets/uxui-visual-audit-2026-03-10/conversation-mobile.png">conversation-mobile.png</a>,
+              <a href="./assets/uxui-visual-audit-2026-03-10/conversation-dark-tablet.png">conversation-dark-tablet.png</a>
+            </div>
+          </article>
+        </div>
+
+        <div class="danger-note">
+          Si aparece texto como <code>quote_command_not_allowed</code>, valores
+          raw como <code>best_match</code>, o rutas tecnicas como storage paths,
+          el hallazgo se clasifica automaticamente como <code>P1</code> o
+          <code>P2</code> segun el contexto.
+        </div>
+      </section>
+
+      <section class="section">
+        <span class="eyebrow">Output</span>
+        <h2>Entregables exigidos a UX/UI y Producto</h2>
+        <ul>
+          <li>Inventario de hallazgos por surface con severidad, impacto y recomendacion.</li>
+          <li>Lista separada de correcciones visuales: jerarquia, spacing, tipografia, contraste, CTA y estados.</li>
+          <li>Lista separada de correcciones de copy y microcopy.</li>
+          <li>Recomendacion explicita de que capas deben fusionarse, simplificarse o desaparecer.</li>
+          <li>Decision conjunta sobre direccion visual antes de una nueva iteracion frontend.</li>
+        </ul>
+        <p class="footer-note">
+          Complementa este checklist con el informe de hallazgos:
+          <a href="./uxui-visual-audit-2026-03-10.md">uxui-visual-audit-2026-03-10.md</a>
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

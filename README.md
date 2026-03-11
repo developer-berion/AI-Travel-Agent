@@ -82,6 +82,7 @@ La app arranca en `mock` y permite:
 ## Scripts
 
 ```bash
+pnpm check
 pnpm lint
 pnpm typecheck
 pnpm test
@@ -91,6 +92,42 @@ pnpm hotelbeds:verify
 pnpm staging:hotelbeds:smoke
 pnpm staging:bundle:smoke
 ```
+
+## Release candidate workflow
+
+Release gate local obligatorio antes de tocar git:
+
+```bash
+pnpm check
+pnpm build
+pnpm --filter @alana/web test:e2e e2e/workspace-smoke.spec.ts
+```
+
+Release gate hosted obligatorio antes de promover a `main`:
+
+1. actualizar `ALANA_RUNTIME_GIT_SHA`, `ALANA_RUNTIME_BUILD_AT` y `ALANA_RUNTIME_MIGRATION_HEAD` en Vercel para el candidato exacto
+2. desplegar manualmente el commit candidato al proyecto staging `alana-ai-agent`
+3. verificar `GET /api/runtime-sync`
+4. exportar localmente:
+
+```bash
+$env:RELEASE_CANDIDATE_GIT_SHA="<sha>"
+$env:RELEASE_CANDIDATE_MIGRATION_HEAD="<migration_head>"
+```
+
+5. ejecutar:
+
+```bash
+pnpm staging:hotelbeds:smoke
+pnpm staging:bundle:smoke
+```
+
+La promocion a `main` solo avanza con:
+
+- CI verde
+- `runtime-sync` alineado al candidato
+- smokes hosted verdes
+- checklist de staging cerrada
 
 ## Runtime sync
 
@@ -174,6 +211,8 @@ Lo que ya quedo activo:
   - descarga valida de `application/pdf` via `/api/quote-sessions/[quoteSessionId]/exports/[exportId]/pdf`
 - `pnpm staging:bundle:smoke` ahora valida export metadata + binary PDF download en hosted solo despues de confirmar `runtime-sync`.
 - `pnpm staging:hotelbeds:smoke` ahora incluye `transfer_after_hotel_choice` y tambien aborta si staging no reporta el SHA o migration head esperados.
+- el release candidate actual incluye el refresh del workbench operator-facing a Antigravity, la localizacion visible en espanol, continuidad resumida en el header sticky y el timeline de versiones operatorio
+- el release candidate actual eleva la referencia de migracion requerida a `20260310190000_operator_notes_and_quote_versions.sql`
 
 Notas operativas vigentes:
 
@@ -185,7 +224,11 @@ Notas operativas vigentes:
   - merge a `main` via PR
   - `manual deploy + smoke` como fallback operativo si la firma verificada no esta disponible desde el entorno local
 - El cierre de sincronizacion ya exige:
-  - migraciones remotas aplicadas hasta `20260310163000_quote_exports_storage.sql`
+  - migraciones remotas aplicadas hasta `20260310190000_operator_notes_and_quote_versions.sql`
   - bucket privado `quote-exports`
   - `/api/runtime-sync` alineado al release candidate
   - rerun de ambos smokes hosted sin drift
+
+## Release summary source
+
+- El resumen operativo para la PR de este candidato vive en `docs/technical/release-candidate-2026-03-11-staging.md`.

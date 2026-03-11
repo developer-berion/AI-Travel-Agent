@@ -27,6 +27,8 @@ export const serviceLineReadinessValues = [
   "ready",
   "partial",
 ] as const;
+export const coverageStateValues = ["full", "partial", "not-ready"] as const;
+export const quoteVersionStateValues = ["active", "superseded"] as const;
 export const recommendationModeValues = [
   "best_match",
   "three_options",
@@ -48,12 +50,16 @@ export const quoteCommandNames = [
   "refresh_bundle_review",
   "generate_quote_pdf",
   "resume_quote_session",
+  "save_operator_note",
+  "update_commercial_status",
 ] as const;
 
 export type QuoteSessionState = (typeof quoteSessionStateValues)[number];
 export type CommercialStatus = (typeof commercialStatusValues)[number];
 export type ServiceLine = (typeof serviceLineValues)[number];
 export type ServiceLineReadiness = (typeof serviceLineReadinessValues)[number];
+export type CoverageState = (typeof coverageStateValues)[number];
+export type QuoteVersionState = (typeof quoteVersionStateValues)[number];
 export type RecommendationMode = (typeof recommendationModeValues)[number];
 export type QuoteCommandName = (typeof quoteCommandNames)[number];
 
@@ -195,6 +201,27 @@ export type QuoteExport = {
   createdAt: string;
 };
 
+export type OperatorNote = {
+  id: string;
+  quoteSessionId: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type QuoteVersion = {
+  id: string;
+  quoteSessionId: string;
+  versionNumber: number;
+  versionState: QuoteVersionState;
+  coverageState: CoverageState;
+  changeReason: string;
+  diffSummary: string | null;
+  payload: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type AuditEvent = {
   id: string;
   quoteSessionId: string;
@@ -212,13 +239,21 @@ export type AuditEvent = {
     | "cart_item_removed"
     | "bundle_review_refreshed"
     | "quote_export_generated"
-    | "quote_session_archived";
+    | "quote_session_archived"
+    | "quote_session_restored"
+    | "recommendation_mode_confirmed"
+    | "requote_change_applied"
+    | "operator_note_saved"
+    | "commercial_status_updated"
+    | "quote_version_synced";
   createdAt: string;
   payload: Record<string, string | number | boolean | null>;
 };
 
 export const quoteSessionStateSchema = z.enum(quoteSessionStateValues);
 export const commercialStatusSchema = z.enum(commercialStatusValues);
+export const coverageStateSchema = z.enum(coverageStateValues);
+export const quoteVersionStateSchema = z.enum(quoteVersionStateValues);
 export const recommendationModeSchema = z.enum(recommendationModeValues);
 export const serviceLineSchema = z.enum(serviceLineValues);
 export const quoteCommandNameSchema = z.enum(quoteCommandNames);
@@ -272,42 +307,76 @@ export const canTransitionSessionState = (
 
 export const getAllowedCommands = (state: QuoteSessionState) => {
   const allowedByState: Record<QuoteSessionState, QuoteCommandName[]> = {
-    draft: ["append_operator_message", "archive_quote_session"],
+    draft: [
+      "append_operator_message",
+      "confirm_recommendation_mode",
+      "save_operator_note",
+      "update_commercial_status",
+      "archive_quote_session",
+    ],
     clarifying: [
       "submit_clarification_answer",
       "append_operator_message",
+      "confirm_recommendation_mode",
       "select_option_for_cart",
       "replace_cart_item",
       "remove_cart_item",
       "refresh_bundle_review",
+      "save_operator_note",
+      "update_commercial_status",
       "archive_quote_session",
     ],
     searching: [
       "request_more_options",
       "apply_requote_change",
+      "save_operator_note",
+      "update_commercial_status",
       "archive_quote_session",
     ],
     reviewing: [
+      "confirm_recommendation_mode",
+      "request_more_options",
       "select_option_for_cart",
       "replace_cart_item",
       "remove_cart_item",
       "refresh_bundle_review",
       "apply_requote_change",
+      "save_operator_note",
+      "update_commercial_status",
       "archive_quote_session",
     ],
     export_ready: [
+      "confirm_recommendation_mode",
+      "request_more_options",
       "select_option_for_cart",
       "replace_cart_item",
       "remove_cart_item",
       "refresh_bundle_review",
       "generate_quote_pdf",
       "apply_requote_change",
+      "save_operator_note",
+      "update_commercial_status",
       "archive_quote_session",
     ],
-    exported: ["apply_requote_change", "archive_quote_session"],
-    escalated: ["append_operator_message", "archive_quote_session"],
-    closed: ["archive_quote_session"],
-    archived: ["restore_quote_session"],
+    exported: [
+      "confirm_recommendation_mode",
+      "apply_requote_change",
+      "save_operator_note",
+      "update_commercial_status",
+      "archive_quote_session",
+    ],
+    escalated: [
+      "append_operator_message",
+      "save_operator_note",
+      "update_commercial_status",
+      "archive_quote_session",
+    ],
+    closed: ["update_commercial_status", "archive_quote_session"],
+    archived: [
+      "restore_quote_session",
+      "save_operator_note",
+      "update_commercial_status",
+    ],
   };
 
   return allowedByState[state];
@@ -339,4 +408,16 @@ export const quoteStateLabels: Record<QuoteSessionState, string> = {
   escalated: "Escalated",
   closed: "Closed",
   archived: "Archived",
+};
+
+export const recommendationModeLabels: Record<RecommendationMode, string> = {
+  best_match: "Best match",
+  three_options: "Three options",
+  exact: "Exact",
+};
+
+export const coverageStateLabels: Record<CoverageState, string> = {
+  full: "Cobertura completa",
+  partial: "Cobertura parcial",
+  "not-ready": "Pendiente de completar",
 };

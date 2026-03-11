@@ -4,12 +4,9 @@ import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import {
-  type QuoteSession,
-  commercialStatusLabels,
-  quoteStateLabels,
-} from "@alana/domain";
+import { type QuoteSession, commercialStatusLabels } from "@alana/domain";
 
+import { formatUiDate, quoteStateUiLabels } from "@/lib/presentation";
 import { NewQuoteButton } from "./new-quote-button";
 
 export const SessionSidebar = ({
@@ -23,36 +20,39 @@ export const SessionSidebar = ({
     <aside className="sidebar">
       <div className="sidebar-header">
         <div>
-          <p className="eyebrow">Workspace</p>
-          <h2>Quotes</h2>
+          <p className="eyebrow">Mis casos</p>
+          <h2>Cotizaciones</h2>
         </div>
         <NewQuoteButton />
       </div>
 
       <div className="session-list">
         {sessions.length === 0 ? (
-          <div className="empty-panel compact">
-            No hay cotizaciones todavia. Crea la primera para abrir el hilo.
+          <div className="empty-panel compact sidebar-empty">
+            No hay cotizaciones todavía. Crea la primera para abrir el hilo.
           </div>
         ) : (
           sessions.map((session) => {
-            const isActive = pathname === `/quotes/${session.id}`;
+            const isActive = pathname.startsWith(`/quotes/${session.id}`);
+
             return (
               <Link
                 className={clsx("session-card", isActive && "active")}
-                href={`/quotes/${session.id}`}
+                href={`/quotes/${session.id}/conversation`}
                 key={session.id}
               >
                 <div className="session-card-top">
                   <strong>{session.tripLabel}</strong>
-                  <span>{quoteStateLabels[session.status]}</span>
+                  <span className="session-state-pill">
+                    {quoteStateUiLabels[session.status]}
+                  </span>
                 </div>
-                <p>{session.agencyName}</p>
+                <p>{session.latestContextSummary}</p>
                 <div className="session-card-meta">
                   <span>
                     {commercialStatusLabels[session.commercialStatus]}
                   </span>
-                  <span>{session.tripStartDate ?? "Pending dates"}</span>
+                  <span>{formatUiDate(session.tripStartDate)}</span>
                 </div>
               </Link>
             );
