@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alana AI - Prototipo Revisar Cotización</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            dark: {
+              bg: '#1c1c1c', 
+              sidebar: '#141414',
+              surface: '#262626',
+              border: '#333333',
+              text: '#e5e5e5',
+              muted: '#a3a3a3'
+            },
+            primary: {
+              DEFAULT: '#a78bfa',
+              hover: '#8b5cf6',
+              soft: '#ede9fe',
+              darkSoft: '#4c1d95',
+              text: '#5b21b6'
+            },
+            pastel: {
+              blue: '#bfdbfe',
+              blueText: '#1e40af',
+              red: '#fecdd3',
+              redText: '#9f1239',
+              yellow: '#fef08a',
+              yellowText: '#854d0e',
+              green: '#bbf7d0',
+              greenText: '#166534'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #e5e5e5; border-radius: 10px; }
+    .dark ::-webkit-scrollbar-thumb { background: #404040; }
+  </style>
+</head>
+<body class="bg-[#fafafa] dark:bg-dark-bg text-gray-800 dark:text-dark-text overflow-hidden h-screen flex transition-colors duration-300">
+
+  <!-- Sidebar Omitted for brevity -->
+  <aside class="bg-white dark:bg-dark-sidebar w-20 h-full flex flex-col items-center py-6 transition-all duration-300 border-r border-gray-100 dark:border-dark-border shadow-sm z-20">
+    <div class="w-10 h-10 rounded-xl bg-primary-soft dark:bg-primary-darkSoft/40 flex items-center justify-center text-primary-text dark:text-primary-DEFAULT mb-8 shadow-sm">
+      <i class="ph-light ph-sparkle text-xl"></i>
+    </div>
+    
+    <div class="flex flex-col gap-4 flex-1">
+      <a href="index.html" class="w-10 h-10 rounded-xl hover:bg-gray-50 dark:hover:bg-dark-surface flex items-center justify-center text-gray-400 transition-colors" title="Chat">
+        <i class="ph-light ph-chat-teardrop text-xl"></i>
+      </a>
+      <a href="compare-matrix.html" class="w-10 h-10 rounded-xl hover:bg-gray-50 dark:hover:bg-dark-surface flex items-center justify-center text-gray-400 transition-colors" title="Comparar">
+        <i class="ph-light ph-git-diff text-xl"></i>
+      </a>
+      <div class="w-10 h-10 rounded-xl bg-gray-100 dark:bg-dark-surface flex items-center justify-center text-primary transition-colors shadow-inner" title="Revisar Cotización">
+        <i class="ph-light ph-files text-xl"></i>
+      </div>
+    </div>
+
+    <!-- Theme Toggle -->
+    <button class="w-10 h-10 rounded-xl hover:bg-gray-50 dark:hover:bg-dark-surface flex items-center justify-center text-gray-400 transition-colors mt-auto mb-4" id="theme-toggle">
+      <i class="ph-light ph-sun dark:hidden text-xl"></i>
+      <i class="ph-light ph-moon hidden dark:block text-xl"></i>
+    </button>
+  </aside>
+
+  <!-- Main Area -->
+  <main class="flex-1 flex flex-col h-full bg-[#fafafa] dark:bg-dark-bg relative overflow-hidden">
+    
+    <!-- Header -->
+    <header class="h-16 flex items-center justify-between px-8 bg-[#fafafa]/80 dark:bg-dark-bg/80 backdrop-blur-md z-10 border-b border-gray-100 dark:border-dark-border">
+      <div class="flex items-center gap-4">
+        <a href="index.html" class="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-800 dark:text-dark-muted dark:hover:text-white transition-colors">
+          <i class="ph-light ph-arrow-left text-lg"></i> Volver al chat
+        </a>
+        <div class="h-4 w-px bg-gray-200 dark:bg-dark-border"></div>
+        <h1 class="text-xl font-medium text-gray-800 dark:text-gray-100">Revisar Cotización</h1>
+        <span class="bg-primary-soft dark:bg-primary-darkSoft/30 text-primary-text dark:text-primary-DEFAULT text-xs px-2.5 py-1 rounded-lg font-medium tracking-wide">Listo para Exportar</span>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <button class="w-10 h-10 rounded-xl hover:bg-pastel-red/10 dark:hover:bg-red-900/20 text-gray-400 hover:text-pastel-redText dark:hover:text-red-400 transition-colors flex items-center justify-center border border-transparent hover:border-pastel-red/30 dark:hover:border-red-900/30" title="Archivar Caso">
+          <i class="ph-light ph-archive text-xl"></i>
+        </button>
+        <button class="text-gray-500 hover:text-gray-800 dark:text-dark-muted dark:hover:text-white px-4 py-2 text-sm font-medium transition-colors border border-gray-200 dark:border-dark-border rounded-xl bg-white dark:bg-dark-surface shadow-sm">
+          Editar Cotización
+        </button>
+        <a href="export-preview.html" class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-xl text-sm font-medium transition-all shadow-sm flex items-center gap-2">
+          <i class="ph-light ph-export"></i> Exportar PDF
+        </a>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-auto p-8 custom-scrollbar relative">
+      <div class="max-w-4xl mx-auto space-y-6 pb-20">
+
+        <!-- Caveats Warning Banner -->
+        <div class="bg-pastel-yellow/30 dark:bg-yellow-900/10 border border-pastel-yellow dark:border-yellow-900/30 rounded-2xl p-4 flex gap-4 shadow-sm">
+          <div class="bg-pastel-yellow/60 dark:bg-yellow-900/30 w-10 h-10 rounded-full flex items-center justify-center shrink-0">
+            <i class="ph-light ph-warning text-pastel-yellowText dark:text-yellow-500 text-xl"></i>
+          </div>
+          <div class="flex-1">
+            <h3 class="font-medium text-pastel-yellowText dark:text-yellow-500">Advertencias Comerciales Pendientes</h3>
+            <p class="text-pastel-yellowText/80 dark:text-yellow-500/80 text-sm mt-1 font-light">Los impuestos a pagar en el check-in (aprox. $45/noche) no están incluidos en el precio final mostrado al cliente.</p>
+          </div>
+        </div>
+
+        <!-- Main Invoice Style Card -->
+        <div class="bg-white dark:bg-dark-surface rounded-3xl border border-gray-100 dark:border-dark-border shadow-sm overflow-hidden p-8">
+          
+          <div class="flex justify-between items-start mb-10 pb-8 border-b border-gray-100 dark:border-dark-border">
+            <div>
+              <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">Viaje a Madrid</h2>
+              <p class="text-gray-400 dark:text-dark-muted mt-2 font-light flex items-center gap-2">
+                <i class="ph-light ph-calendar"></i> 1 May - 5 May, 2026
+                <span class="mx-2">•</span>
+                <i class="ph-light ph-users"></i> 2 Adultos
+              </p>
+            </div>
+            <div class="text-right">
+              <div class="text-[13px] text-gray-400 dark:text-dark-muted uppercase tracking-widest font-medium mb-1">Cotización Total</div>
+              <div class="text-3xl font-semibold text-gray-800 dark:text-white">USD 780<span class="text-lg text-gray-400 font-normal">.00</span></div>
+            </div>
+          </div>
+
+          <!-- Services Breakdown -->
+          <h3 class="font-medium text-gray-800 dark:text-gray-200 mb-6 flex items-center gap-2">
+            <i class="ph-light ph-list-dashes text-primary"></i> Desglose de Servicios
+          </h3>
+          
+          <div class="space-y-4">
+            <!-- Hotel Item -->
+            <div class="flex gap-4 p-4 rounded-2xl hover:bg-gray-50 dark:hover:bg-[#2d2d2d] transition-colors border border-transparent hover:border-gray-100 dark:hover:border-dark-border">
+              <div class="w-12 h-12 rounded-xl bg-pastel-blue/30 dark:bg-blue-900/20 text-pastel-blueText dark:text-blue-400 flex flex-col items-center justify-center shrink-0">
+                <i class="ph-light ph-buildings text-2xl"></i>
+              </div>
+              <div class="flex-1">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-medium text-gray-800 dark:text-white">Hotel Madrid Grand</h4>
+                    <p class="text-[13px] text-gray-500 dark:text-dark-muted mt-1 font-light">Habitación Doble Estándar • Centro de la ciudad</p>
+                  </div>
+                  <div class="font-semibold text-gray-800 dark:text-white">USD 780.00</div>
+                </div>
+                <div class="mt-3 inline-flex items-center gap-1.5 bg-gray-100 dark:bg-[#333] text-gray-500 dark:text-gray-300 px-2.5 py-1 rounded-lg text-[11px] font-medium uppercase tracking-wide">
+                  4 Noches
+                </div>
+              </div>
+            </div>
+
+            <!-- Transfer Item -->
+            <div class="flex gap-4 p-4 rounded-2xl bg-[#fafafa] dark:bg-[#222] border border-gray-100 dark:border-dark-border opacity-60">
+              <div class="w-12 h-12 rounded-xl bg-gray-200 dark:bg-[#333] text-gray-400 dark:text-gray-500 flex flex-col items-center justify-center shrink-0">
+                <i class="ph-light ph-car text-2xl"></i>
+              </div>
+              <div class="flex-1">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-medium text-gray-800 dark:text-white">Traslado Privado</h4>
+                    <p class="text-[13px] text-pastel-redText dark:text-red-400 mt-1 font-light">Pendiente detalles de la propiedad para confirmar precio.</p>
+                  </div>
+                  <div class="font-medium text-gray-400 dark:text-dark-muted blur-[2px]">$0.00</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const htmlElement = document.documentElement;
+    themeToggleBtn.addEventListener('click', () => {
+      htmlElement.classList.toggle('dark');
+    });
+  </script>
+</body>
+</html>

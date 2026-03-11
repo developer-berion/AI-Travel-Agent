@@ -7,6 +7,7 @@ import type {
 } from "@alana/domain";
 import { createId, titleize } from "@alana/shared";
 
+import { resolveTransferPropertyAnchor } from "./anchor-resolution";
 import type {
   HotelbedsAdapterConfig,
   HotelbedsSearchAdapter,
@@ -438,6 +439,21 @@ const normalizeHotels = (
           ? "Hotelbeds devuelve taxes no incluidas en esta tarifa; revisa el disclosure antes de compartir."
           : null;
 
+      // Prefer the supplier hotel code because the transfers API accepts it as
+      // a direct ATLAS destination; keep the registry lookup only as fallback.
+      const transferPropertyAnchor =
+        hotel.code && hotel.name
+          ? {
+              code: `${hotel.code}`,
+              label: hotel.name,
+              type: "ATLAS",
+            }
+          : resolveTransferPropertyAnchor({
+              destination: hotel.destinationName,
+              hotelCode: hotel.code ? `${hotel.code}` : null,
+              hotelName: hotel.name,
+            });
+
       const option: NormalizedOption = {
         id: createId(),
         serviceLine,
@@ -467,6 +483,13 @@ const normalizeHotels = (
           rateKey: cheapestRoom?.rate.rateKey ?? "unknown",
           roomCode: cheapestRoom?.room.code ?? "unknown",
           source: "hotelbeds_hotels",
+          ...(transferPropertyAnchor
+            ? {
+                transferPropertyCode: transferPropertyAnchor.code,
+                transferPropertyLabel: transferPropertyAnchor.label,
+                transferPropertyType: transferPropertyAnchor.type,
+              }
+            : {}),
         },
       };
 
@@ -474,7 +497,7 @@ const normalizeHotels = (
     })
     .filter(isNormalizedOption)
     .sort((left, right) => left.headlinePrice - right.headlinePrice)
-    .slice(0, 3);
+    .slice(0, 5);
 
   if (options.length === 0) {
     return buildErrorResult(
@@ -551,7 +574,7 @@ const normalizeActivities = (
     })
     .filter(isNormalizedOption)
     .sort((left, right) => left.headlinePrice - right.headlinePrice)
-    .slice(0, 3);
+    .slice(0, 5);
 
   if (options.length === 0) {
     return buildErrorResult(
@@ -639,7 +662,7 @@ const normalizeTransfers = (
     })
     .filter(isNormalizedOption)
     .sort((left, right) => left.headlinePrice - right.headlinePrice)
-    .slice(0, 3);
+    .slice(0, 5);
 
   if (options.length === 0) {
     return buildErrorResult(

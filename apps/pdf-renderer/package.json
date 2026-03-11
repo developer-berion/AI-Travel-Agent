@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@alana/domain": "workspace:*"
+    "@alana/domain": "workspace:*",
+    "pdf-lib": "^1.17.1"
   }
 }

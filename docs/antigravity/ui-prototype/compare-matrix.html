@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alana AI - Prototipo Matriz Comparativa</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            dark: {
+              bg: '#1c1c1c', 
+              sidebar: '#141414',
+              surface: '#262626',
+              border: '#333333',
+              text: '#e5e5e5',
+              muted: '#a3a3a3'
+            },
+            primary: {
+              DEFAULT: '#a78bfa',
+              hover: '#8b5cf6',
+              soft: '#ede9fe',
+              darkSoft: '#4c1d95',
+              text: '#5b21b6'
+            },
+            pastel: {
+              blue: '#bfdbfe',
+              blueText: '#1e40af',
+              red: '#fecdd3',
+              redText: '#9f1239',
+              yellow: '#fef08a',
+              yellowText: '#854d0e',
+              green: '#bbf7d0',
+              greenText: '#166534'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #e5e5e5; border-radius: 10px; }
+    .dark ::-webkit-scrollbar-thumb { background: #404040; }
+    ::-webkit-scrollbar-thumb:hover { background: #d4d4d4; }
+    .dark ::-webkit-scrollbar-thumb:hover { background: #525252; }
+  </style>
+</head>
+<body class="bg-[#fafafa] dark:bg-dark-bg text-gray-800 dark:text-dark-text overflow-hidden h-screen flex transition-colors duration-300">
+
+  <!-- Sidebar Omitted for brevity, using a collapsed version to give space to the matrix -->
+  <aside class="bg-white dark:bg-dark-sidebar w-20 h-full flex flex-col items-center py-6 transition-all duration-300 border-r border-gray-100 dark:border-dark-border shadow-sm z-20">
+    <div class="w-10 h-10 rounded-xl bg-primary-soft dark:bg-primary-darkSoft/40 flex items-center justify-center text-primary-text dark:text-primary-DEFAULT mb-8 shadow-sm">
+      <i class="ph-light ph-sparkle text-xl"></i>
+    </div>
+    
+    <div class="flex flex-col gap-4 flex-1">
+      <button class="w-10 h-10 rounded-xl hover:bg-gray-50 dark:hover:bg-dark-surface flex items-center justify-center text-gray-400 transition-colors" title="Chat">
+        <i class="ph-light ph-chat-teardrop text-xl"></i>
+      </button>
+      <button class="w-10 h-10 rounded-xl bg-gray-100 dark:bg-dark-surface flex items-center justify-center text-primary transition-colors shadow-inner" title="Comparar">
+        <i class="ph-light ph-git-diff text-xl"></i>
+      </button>
+      <button class="w-10 h-10 rounded-xl hover:bg-gray-50 dark:hover:bg-dark-surface flex items-center justify-center text-gray-400 transition-colors" title="Revisar Cotización">
+        <i class="ph-light ph-files text-xl"></i>
+      </button>
+    </div>
+
+    <!-- Theme Toggle -->
+    <button class="w-10 h-10 rounded-xl hover:bg-gray-50 dark:hover:bg-dark-surface flex items-center justify-center text-gray-400 transition-colors mt-auto mb-4" id="theme-toggle">
+      <i class="ph-light ph-sun dark:hidden text-xl"></i>
+      <i class="ph-light ph-moon hidden dark:block text-xl"></i>
+    </button>
+  </aside>
+
+  <!-- Main Area -->
+  <main class="flex-1 flex flex-col h-full bg-[#fafafa] dark:bg-dark-bg overflow-hidden relative">
+    
+    <!-- Header -->
+    <header class="h-16 flex items-center justify-between px-8 bg-[#fafafa]/80 dark:bg-dark-bg/80 backdrop-blur-md z-10">
+      <div class="flex items-center gap-4">
+        <a href="index.html" class="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-800 dark:text-dark-muted dark:hover:text-white transition-colors">
+          <i class="ph-light ph-arrow-left text-lg"></i> Volver al chat
+        </a>
+        <div class="h-4 w-px bg-gray-200 dark:bg-dark-border"></div>
+        <h1 class="text-xl font-medium text-gray-800 dark:text-gray-100">Comparación de Hoteles</h1>
+        <span class="bg-gray-100 dark:bg-[#333] text-gray-600 dark:text-gray-300 text-xs px-2.5 py-1 rounded-full">Viaje a Madrid</span>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <button class="text-gray-500 hover:text-gray-800 dark:text-dark-muted dark:hover:text-white px-4 py-2 text-sm font-medium transition-colors">
+          Limpiar Comparativa
+        </button>
+      </div>
+    </header>
+
+    <!-- Compare Content -->
+    <div class="flex-1 overflow-auto p-8 custom-scrollbar">
+      <div class="max-w-6xl mx-auto">
+        
+        <!-- The Matrix -->
+        <div class="bg-white dark:bg-dark-surface rounded-3xl border border-gray-100 dark:border-dark-border shadow-sm overflow-hidden">
+          
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-[#fafafa] dark:bg-[#202020] border-b border-gray-100 dark:border-dark-border">
+                <th class="p-6 font-medium text-gray-500 dark:text-dark-muted w-1/4 align-bottom">
+                  Criterios
+                </th>
+                
+                <!-- Option 1 -->
+                <th class="p-6 w-[37.5%] align-top border-l border-gray-100 dark:border-dark-border relative">
+                  <div class="absolute top-0 left-0 w-full h-1 bg-primary"></div>
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <div class="bg-primary-soft dark:bg-primary-darkSoft/30 text-primary-text dark:text-primary-DEFAULT text-[11px] px-2 py-0.5 rounded uppercase tracking-wider font-semibold inline-block mb-2">Recomendado</div>
+                      <h3 class="text-lg font-medium text-gray-800 dark:text-white">Hotel Madrid Grand</h3>
+                      <p class="text-[13px] text-gray-400 dark:text-dark-muted mt-1 font-light">4-estrellas • Centro de la ciudad</p>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-xl font-semibold text-gray-800 dark:text-white">USD 780</div>
+                      <div class="text-[11px] text-gray-400">Total por 4 noches</div>
+                    </div>
+                  </div>
+                  <button class="w-full mt-6 bg-primary hover:bg-primary-hover text-white text-sm font-medium py-2 rounded-xl transition-all shadow-sm">
+                    Seleccionar para cotización
+                  </button>
+                </th>
+
+                <!-- Option 2 -->
+                <th class="p-6 w-[37.5%] align-top border-l border-gray-100 dark:border-dark-border">
+                  <div class="flex justify-between items-start mt-6">
+                    <div>
+                      <h3 class="text-lg font-medium text-gray-800 dark:text-white">Hotel Madrid Value</h3>
+                      <p class="text-[13px] text-gray-400 dark:text-dark-muted mt-1 font-light">3-estrellas • Distrito Financiero</p>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-xl font-semibold text-gray-800 dark:text-white">USD 620</div>
+                      <div class="text-[11px] text-gray-400">Total por 4 noches</div>
+                    </div>
+                  </div>
+                  <button class="w-full mt-6 bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-[#2d2d2d] text-gray-700 dark:text-gray-200 text-sm font-medium py-2 rounded-xl transition-all shadow-sm">
+                    Seleccionar para cotización
+                  </button>
+                </th>
+              </tr>
+            </thead>
+            <tbody class="text-sm">
+              <!-- Row 1 -->
+              <tr class="border-b border-gray-50 dark:border-dark-border/50 hover:bg-[#fafafa] dark:hover:bg-[#222] transition-colors">
+                <td class="p-5 text-gray-500 dark:text-dark-muted font-medium flex items-center gap-2">
+                  <i class="ph-light ph-map-pin"></i> Ubicación y Zona
+                </td>
+                <td class="p-5 border-l border-gray-50 dark:border-dark-border/50 text-gray-700 dark:text-gray-300">
+                  Excelente opción. Ubicado en zona central apta para operadores.
+                </td>
+                <td class="p-5 border-l border-gray-50 dark:border-dark-border/50 text-gray-700 dark:text-gray-300">
+                  Buena alternativa. Más lejos del centro pero bien conectado.
+                </td>
+              </tr>
+              <!-- Row 2 -->
+              <tr class="border-b border-gray-50 dark:border-dark-border/50 hover:bg-[#fafafa] dark:hover:bg-[#222] transition-colors">
+                <td class="p-5 text-gray-500 dark:text-dark-muted font-medium flex items-center gap-2">
+                  <i class="ph-light ph-star"></i> Confianza y Reputación
+                </td>
+                <td class="p-5 border-l border-gray-50 dark:border-dark-border/50">
+                  <span class="inline-flex items-center gap-1.5 bg-pastel-green/40 dark:bg-green-900/20 text-pastel-greenText dark:text-green-400 px-2.5 py-1 rounded-lg text-[13px] font-medium border border-pastel-green dark:border-green-900/30">
+                    <i class="ph-light ph-check-circle"></i> Alta Confianza
+                  </span>
+                </td>
+                <td class="p-5 border-l border-gray-50 dark:border-dark-border/50">
+                   <span class="inline-flex items-center gap-1.5 bg-gray-100 dark:bg-[#333] text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-lg text-[13px] font-medium">
+                    Neutral
+                  </span>
+                </td>
+              </tr>
+              <!-- Row 3 -->
+              <tr class="border-b border-gray-50 dark:border-dark-border/50 hover:bg-[#fafafa] dark:hover:bg-[#222] transition-colors">
+                <td class="p-5 text-gray-500 dark:text-dark-muted font-medium flex items-center gap-2">
+                  <i class="ph-light ph-receipt"></i> Impuestos y Tarifas
+                </td>
+                <td class="p-5 border-l border-gray-50 dark:border-dark-border/50">
+                  <span class="inline-flex items-center gap-1.5 bg-pastel-yellow/30 dark:bg-yellow-900/20 text-pastel-yellowText dark:text-yellow-500 px-2.5 py-1 rounded-lg text-[13px] font-medium border border-pastel-yellow dark:border-yellow-900/30">
+                    <i class="ph-light ph-warning-circle"></i> Impuestos al check-in
+                  </span>
+                </td>
+                <td class="p-5 border-l border-gray-50 dark:border-dark-border/50">
+                   <span class="inline-flex items-center gap-1.5 bg-pastel-green/40 dark:bg-green-900/20 text-pastel-greenText dark:text-green-400 px-2.5 py-1 rounded-lg text-[13px] font-medium border border-pastel-green dark:border-green-900/30">
+                    <i class="ph-light ph-check-circle"></i> Todo incluido
+                  </span>
+                </td>
+              </tr>
+              <!-- Row 4 -->
+              <tr class="hover:bg-[#fafafa] dark:hover:bg-[#222] transition-colors">
+                <td class="p-5 text-gray-500 dark:text-dark-muted font-medium flex items-center gap-2">
+                  <i class="ph-light ph-shield-warning"></i> Cancelación
+                </td>
+                <td class="p-5 border-l border-gray-50 dark:border-dark-border/50 text-gray-700 dark:text-gray-300">
+                  Flexible. Cancelación gratuita hasta 15-abr-2026.
+                </td>
+                <td class="p-5 border-l border-gray-50 dark:border-dark-border/50 text-gray-700 dark:text-gray-300">
+                  Estricta. No reembolsable.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const htmlElement = document.documentElement;
+    themeToggleBtn.addEventListener('click', () => {
+      htmlElement.classList.toggle('dark');
+    });
+  </script>
+</body>
+</html>

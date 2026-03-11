@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es" class="antialiased">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alana AI - Design System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            primary: {
+              DEFAULT: '#8A5A9E', // Pastel purple brand color
+              hover: '#7A4A8E',
+              soft: '#F4F0F6',
+              darkSoft: '#2D2034',
+              text: '#6A3A7E'
+            },
+            pastel: {
+              red: '#FFE5E5',
+              redText: '#D94040',
+              yellow: '#FFF3CD',
+              yellowText: '#D99A2B',
+              green: '#E5F6DF',
+              greenText: '#4A9B3E',
+              blue: '#E5F0FF',
+              blueText: '#3A7BD5'
+            },
+            dark: {
+              bg: '#121212',
+              surface: '#1E1E1E',
+              border: '#2A2A2A',
+              text: '#E0E0E0',
+              muted: '#888888'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 4px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; }
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-dark-bg text-gray-800 dark:text-gray-200 transition-colors duration-200">
+  
+  <div class="max-w-6xl mx-auto px-6 py-12">
+    <header class="mb-16 border-b border-gray-200 dark:border-dark-border pb-8 flex justify-between items-end">
+      <div>
+        <h1 class="text-4xl font-semibold text-gray-900 dark:text-white mb-3">Alana AI Design System</h1>
+        <p class="text-lg text-gray-500 dark:text-dark-muted font-light">Guía de estilos, colores, tipografía y componentes para el entorno de cotización de Alana.</p>
+      </div>
+      <button onclick="document.documentElement.classList.toggle('dark')" class="p-3 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-xl text-gray-500 dark:text-gray-400 hover:text-primary transition-colors hover:shadow-sm">
+        <i class="ph-light ph-moon text-xl dark:hidden"></i>
+        <i class="ph-light ph-sun text-xl hidden dark:block"></i>
+      </button>
+    </header>
+
+    <div class="space-y-20">
+      
+      <!-- Section: Colors -->
+      <section>
+        <h2 class="text-2xl font-medium mb-8 text-gray-800 dark:text-gray-100 flex items-center gap-3">
+          <i class="ph-light ph-palette text-primary"></i> Colores
+        </h2>
+        
+        <div class="space-y-10">
+          <!-- Primary -->
+          <div>
+            <h3 class="text-sm font-semibold text-gray-400 tracking-widest uppercase mb-4">Marca (Pastel Purple)</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div class="space-y-2">
+                <div class="h-24 rounded-2xl bg-[#8A5A9E] shadow-sm border border-black/5 dark:border-white/5"></div>
+                <div class="font-medium text-sm">Primary <span class="bg-gray-100 dark:bg-[#333] px-2 py-0.5 rounded text-[11px] ml-2 text-gray-500 dark:text-gray-400">#8A5A9E</span></div>
+                <div class="text-[13px] text-gray-500 dark:text-dark-muted font-light">Botones principales, acentos importantes.</div>
+              </div>
+              <div class="space-y-2">
+                <div class="h-24 rounded-2xl bg-[#7A4A8E] shadow-sm border border-black/5 dark:border-white/5"></div>
+                <div class="font-medium text-sm">Primary Hover <span class="bg-gray-100 dark:bg-[#333] px-2 py-0.5 rounded text-[11px] ml-2 text-gray-500 dark:text-gray-400">#7A4A8E</span></div>
+                <div class="text-[13px] text-gray-500 dark:text-dark-muted font-light">Estado hover para botones primarios.</div>
+              </div>
+              <div class="space-y-2">
+                <div class="h-24 rounded-2xl bg-[#F4F0F6] dark:bg-[#2D2034] shadow-sm border border-black/5 dark:border-white/5"></div>
+                <div class="font-medium text-sm">Primary Soft <span class="bg-gray-100 dark:bg-[#333] px-2 py-0.5 rounded text-[11px] ml-2 text-gray-500 dark:text-gray-400">bg-primary-soft</span></div>
+                <div class="text-[13px] text-gray-500 dark:text-dark-muted font-light">Fondos sutiles, tags destacados, mensajes del usuario.</div>
+              </div>
+              <div class="space-y-2">
+                <div class="h-24 rounded-2xl bg-[#6A3A7E] dark:bg-[#8A5A9E] shadow-sm border border-black/5 dark:border-white/5"></div>
+                <div class="font-medium text-sm">Primary Text <span class="bg-gray-100 dark:bg-[#333] px-2 py-0.5 rounded text-[11px] ml-2 text-gray-500 dark:text-gray-400">text-primary-text</span></div>
+                <div class="text-[13px] text-gray-500 dark:text-dark-muted font-light">Texto sobre fondos soft para buen contraste.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Semantic Semantic -->
+          <div>
+            <h3 class="text-sm font-semibold text-gray-400 tracking-widest uppercase mb-4">Semánticos (Pastel)</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div class="space-y-2">
+                <div class="h-16 rounded-2xl bg-[#E5F0FF] dark:bg-[#1A2A40] border border-[#3A7BD5]/20 flex items-center justify-center">
+                  <span class="text-[#3A7BD5] dark:text-[#6A9BE5] font-medium text-sm">Blue Info</span>
+                </div>
+                <div class="text-[13px] text-gray-500 dark:text-dark-muted font-light">Datos confirmados, contexto, información neutral.</div>
+              </div>
+              <div class="space-y-2">
+                <div class="h-16 rounded-2xl bg-[#E5F6DF] dark:bg-[#1A3320] border border-[#4A9B3E]/20 flex items-center justify-center">
+                  <span class="text-[#4A9B3E] dark:text-[#6ABF5D] font-medium text-sm">Green Success</span>
+                </div>
+                <div class="text-[13px] text-gray-500 dark:text-dark-muted font-light">Opciones recomendadas, ventajas, confirmaciones.</div>
+              </div>
+              <div class="space-y-2">
+                <div class="h-16 rounded-2xl bg-[#FFF3CD] dark:bg-[#332A1A] border border-[#D99A2B]/20 flex items-center justify-center">
+                  <span class="text-[#D99A2B] dark:text-[#E5B55A] font-medium text-sm">Yellow Warning</span>
+                </div>
+                <div class="text-[13px] text-gray-500 dark:text-dark-muted font-light">Preguntas abiertas, advertencias de impuestos, cosas pendientes.</div>
+              </div>
+              <div class="space-y-2">
+                <div class="h-16 rounded-2xl bg-[#FFE5E5] dark:bg-[#331A1A] border border-[#D94040]/20 flex items-center justify-center">
+                  <span class="text-[#D94040] dark:text-[#E56A6A] font-medium text-sm">Red Danger</span>
+                </div>
+                <div class="text-[13px] text-gray-500 dark:text-dark-muted font-light">Errores, bloqueos, campos faltantes, desventajas graves.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Typography -->
+      <section>
+        <h2 class="text-2xl font-medium mb-8 text-gray-800 dark:text-gray-100 flex items-center gap-3">
+          <i class="ph-light ph-text-aa text-primary"></i> Tipografía (Inter)
+        </h2>
+        
+        <div class="bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-3xl p-8 shadow-sm">
+          <div class="space-y-8">
+            <div class="flex items-end gap-8 pb-6 border-b border-gray-100 dark:border-dark-border">
+              <div class="w-32 text-sm text-gray-400">Heading 1</div>
+              <h1 class="text-3xl font-semibold text-gray-800 dark:text-white leading-tight">Revisar Cotización</h1>
+              <div class="text-[13px] text-gray-400 ml-auto">text-3xl, font-semibold</div>
+            </div>
+            <div class="flex items-end gap-8 pb-6 border-b border-gray-100 dark:border-dark-border">
+              <div class="w-32 text-sm text-gray-400">Heading 2</div>
+              <h2 class="text-2xl font-medium text-gray-800 dark:text-white leading-tight">Viaje a Madrid</h2>
+              <div class="text-[13px] text-gray-400 ml-auto">text-2xl, font-medium</div>
+            </div>
+            <div class="flex items-end gap-8 pb-6 border-b border-gray-100 dark:border-dark-border">
+              <div class="w-32 text-sm text-gray-400">Heading 3</div>
+              <h3 class="text-xl font-medium text-gray-800 dark:text-white leading-tight">Opciones de Hotel</h3>
+              <div class="text-[13px] text-gray-400 ml-auto">text-xl, font-medium</div>
+            </div>
+            <div class="flex items-start gap-8 pb-6 border-b border-gray-100 dark:border-dark-border">
+              <div class="w-32 text-sm text-gray-400 mt-1">Body Normal</div>
+              <p class="text-[15px] font-light text-gray-600 dark:text-gray-300 leading-relaxed max-w-2xl">He iniciado la cotización. La búsqueda de hoteles está completa, pero necesito una aclaración para el traslado. El sistema requiere especificar un punto de recogida exacto.</p>
+              <div class="text-[13px] text-gray-400 ml-auto mt-1">text-[15px], font-light</div>
+            </div>
+            <div class="flex items-center gap-8 pb-6 border-b border-gray-100 dark:border-dark-border">
+              <div class="w-32 text-sm text-gray-400">Labels / UI</div>
+              <span class="text-sm font-medium text-gray-700 dark:text-gray-200">Operador Alana</span>
+              <div class="text-[13px] text-gray-400 ml-auto">text-sm, font-medium</div>
+            </div>
+            <div class="flex items-center gap-8 pb-2">
+              <div class="w-32 text-sm text-gray-400">Eyebrow</div>
+              <span class="text-[11px] font-semibold text-gray-400 tracking-widest uppercase">Viajes Recientes</span>
+              <div class="text-[13px] text-gray-400 ml-auto">text-[11px], tracking-widest, uppercase</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Iconography -->
+      <section>
+        <h2 class="text-2xl font-medium mb-8 text-gray-800 dark:text-gray-100 flex items-center gap-3">
+          <i class="ph-light ph-star text-primary"></i> Iconografía (Phosphor Icons - Light)
+        </h2>
+        
+        <p class="text-gray-500 dark:text-dark-muted font-light mb-6 text-[15px]">
+          Se utilizan iconos en peso "Light" para mantener una estética limpia y no abrumar visualmente las pantallas con mucha densidad de información.
+        </p>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <!-- Icon Cards -->
+          <div class="bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-2xl p-4 flex flex-col items-center justify-center gap-3">
+            <i class="ph-light ph-magic-wand text-3xl text-primary"></i>
+            <span class="text-xs text-gray-500 font-medium">ph-magic-wand</span>
+          </div>
+          <div class="bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-2xl p-4 flex flex-col items-center justify-center gap-3">
+            <i class="ph-light ph-buildings text-3xl text-gray-600 dark:text-gray-300"></i>
+            <span class="text-xs text-gray-500 font-medium">ph-buildings</span>
+          </div>
+          <div class="bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-2xl p-4 flex flex-col items-center justify-center gap-3">
+            <i class="ph-light ph-calendar text-3xl text-gray-600 dark:text-gray-300"></i>
+            <span class="text-xs text-gray-500 font-medium">ph-calendar</span>
+          </div>
+          <div class="bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-2xl p-4 flex flex-col items-center justify-center gap-3">
+            <i class="ph-light ph-users text-3xl text-gray-600 dark:text-gray-300"></i>
+            <span class="text-xs text-gray-500 font-medium">ph-users</span>
+          </div>
+          <div class="bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-2xl p-4 flex flex-col items-center justify-center gap-3">
+            <i class="ph-light ph-list-dashes text-3xl text-gray-600 dark:text-gray-300"></i>
+            <span class="text-xs text-gray-500 font-medium">ph-list-dashes</span>
+          </div>
+          <div class="bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-2xl p-4 flex flex-col items-center justify-center gap-3">
+            <i class="ph-light ph-git-diff text-3xl text-gray-600 dark:text-gray-300"></i>
+            <span class="text-xs text-gray-500 font-medium">ph-git-diff</span>
+          </div>
+          <div class="bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-2xl p-4 flex flex-col items-center justify-center gap-3">
+            <i class="ph-light ph-files text-3xl text-gray-600 dark:text-gray-300"></i>
+            <span class="text-xs text-gray-500 font-medium">ph-files</span>
+          </div>
+          <div class="bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-2xl p-4 flex flex-col items-center justify-center gap-3">
+            <i class="ph-light ph-check-circle text-3xl text-[#4A9B3E]"></i>
+            <span class="text-xs text-gray-500 font-medium">ph-check-circle</span>
+          </div>
+          <div class="bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-2xl p-4 flex flex-col items-center justify-center gap-3">
+            <i class="ph-light ph-warning-circle text-3xl text-[#D99A2B]"></i>
+            <span class="text-xs text-gray-500 font-medium">ph-warning-circle</span>
+          </div>
+          <div class="bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-2xl p-4 flex flex-col items-center justify-center gap-3">
+            <i class="ph-light ph-shield-warning text-3xl text-[#D94040]"></i>
+            <span class="text-xs text-gray-500 font-medium">ph-shield</span>
+          </div>
+          <div class="bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-2xl p-4 flex flex-col items-center justify-center gap-3">
+            <i class="ph-light ph-airplane text-3xl text-gray-600 dark:text-gray-300"></i>
+            <span class="text-xs text-gray-500 font-medium">ph-airplane</span>
+          </div>
+          <div class="bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-2xl p-4 flex flex-col items-center justify-center gap-3">
+            <i class="ph-light ph-car text-3xl text-gray-600 dark:text-gray-300"></i>
+            <span class="text-xs text-gray-500 font-medium">ph-car</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: UI Components -->
+      <section>
+        <h2 class="text-2xl font-medium mb-8 text-gray-800 dark:text-gray-100 flex items-center gap-3">
+          <i class="ph-light ph-intersect text-primary"></i> Componentes Base
+        </h2>
+        
+        <div class="space-y-12">
+          <!-- Buttons -->
+          <div>
+            <h3 class="text-sm font-semibold text-gray-400 tracking-widest uppercase mb-6">Botones (rounded-xl)</h3>
+            <div class="flex flex-wrap gap-4 items-center p-8 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-3xl">
+              
+              <button class="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm flex items-center gap-2">
+                <i class="ph-light ph-export"></i> Botón Primario
+              </button>
+              
+              <button class="bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-[#2d2d2d] text-gray-600 dark:text-gray-200 px-5 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm border border-gray-200 dark:border-dark-border flex items-center gap-2">
+                <i class="ph-light ph-files text-lg text-gray-400"></i>
+                Botón Secundario
+              </button>
+              
+              <button class="text-gray-500 hover:text-gray-800 dark:text-dark-muted dark:hover:text-white px-5 py-2.5 text-sm font-medium transition-colors border border-transparent hover:border-gray-200 dark:hover:border-dark-border rounded-xl">
+                Botón Fantasma
+              </button>
+
+              <button class="w-10 h-10 rounded-xl hover:bg-gray-50 dark:hover:bg-[#2d2d2d] border border-gray-200 dark:border-dark-border flex items-center justify-center text-gray-500 transition-colors shadow-sm">
+                <i class="ph-light ph-list text-xl"></i>
+              </button>
+
+            </div>
+          </div>
+
+          <!-- Cards & Alerts -->
+          <div>
+            <h3 class="text-sm font-semibold text-gray-400 tracking-widest uppercase mb-6">Tarjetas Informativas Claras (rounded-2xl)</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              <!-- Clean Data Card (Yellow) -->
+              <div class="border border-gray-100 dark:border-dark-border rounded-2xl bg-white dark:bg-dark-surface overflow-hidden shadow-sm">
+                <div class="p-4 flex gap-3">
+                  <div class="mt-0.5">
+                    <i class="ph-light ph-warning-circle text-pastel-yellowText dark:text-yellow-500 text-lg"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-medium text-pastel-yellowText dark:text-yellow-500 text-sm mt-0.5">Pendiente de confirmación</h4>
+                    <p class="text-[13px] text-pastel-yellowText/80 dark:text-yellow-500/80 mt-1 font-light leading-relaxed">No se ha podido verificar la disponibilidad del vuelo para las fechas indicadas. Requiere acción manual.</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Clean Data Card (Red) -->
+              <div class="border border-gray-100 dark:border-dark-border rounded-2xl bg-white dark:bg-dark-surface overflow-hidden shadow-sm">
+                <div class="p-4 flex gap-3">
+                  <div class="mt-0.5">
+                    <i class="ph-light ph-shield-warning text-pastel-redText dark:text-red-400 text-lg"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-medium text-pastel-redText dark:text-red-300 text-sm mt-0.5">Falta ancla para traslado</h4>
+                    <p class="text-[13px] text-pastel-redText/80 dark:text-red-300/80 mt-1 font-light leading-relaxed">La búsqueda del traslado requiere una propiedad exacta de recogida o destino.</p>
+                    <button class="mt-3 bg-white/60 dark:bg-red-900/20 hover:bg-white dark:hover:bg-red-900/40 text-pastel-redText dark:text-red-300 text-[13px] font-medium px-4 py-1.5 rounded-xl transition-colors border border-pastel-red/50 dark:border-red-900/30 shadow-sm">Proveer detalles</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Clean Data Card (Blue) -->
+              <div class="border border-gray-100 dark:border-dark-border rounded-2xl bg-white dark:bg-dark-surface overflow-hidden shadow-sm">
+                <div class="p-4 flex gap-3">
+                  <div class="mt-0.5">
+                    <div class="w-8 h-8 rounded-full bg-pastel-blue/50 dark:bg-blue-900/30 flex items-center justify-center text-pastel-blueText dark:text-blue-400">
+                      <i class="ph-light ph-info text-lg"></i>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 class="font-medium text-gray-800 dark:text-gray-200 text-sm mt-1">Reglas de negocio aplicadas</h4>
+                    <p class="text-[13px] text-gray-500 dark:text-gray-400 mt-1 font-light leading-relaxed">El margen sugerido por el sistema es del 15% basado en cotizaciones similares.</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Badges & Tags -->
+          <div>
+            <h3 class="text-sm font-semibold text-gray-400 tracking-widest uppercase mb-6">Etiquetas y Estados</h3>
+            <div class="flex flex-wrap gap-4 items-center p-8 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-3xl">
+              
+              <!-- Tag Gray -->
+              <span class="inline-flex items-center gap-1.5 bg-gray-100 dark:bg-[#333] text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-lg text-[13px] font-medium">
+                Neutral
+              </span>
+
+              <!-- Tag Green -->
+              <span class="inline-flex items-center gap-1.5 bg-pastel-green/40 dark:bg-green-900/20 text-pastel-greenText dark:text-green-400 px-2.5 py-1 rounded-lg text-[13px] font-medium border border-pastel-green dark:border-green-900/30">
+                <i class="ph-light ph-check-circle"></i> Todo incluido
+              </span>
+
+              <!-- Tag Yellow -->
+              <span class="inline-flex items-center gap-1.5 bg-pastel-yellow/30 dark:bg-yellow-900/20 text-pastel-yellowText dark:text-yellow-500 px-2.5 py-1 rounded-lg text-[13px] font-medium border border-pastel-yellow dark:border-yellow-900/30">
+                <i class="ph-light ph-warning-circle"></i> Impuestos al check-in
+              </span>
+
+              <!-- Tag Primary (For highlight) -->
+              <span class="bg-primary-soft dark:bg-primary-darkSoft/30 text-primary-text dark:text-primary-DEFAULT text-[11px] px-2 py-0.5 rounded uppercase tracking-wider font-semibold">
+                Recomendado
+              </span>
+
+              <!-- Rounded pill info -->
+              <div class="bg-pastel-yellow/30 dark:bg-yellow-900/10 border border-pastel-yellow dark:border-yellow-900/30 text-pastel-yellowText dark:text-yellow-500 text-[13px] px-4 py-1.5 rounded-full font-medium flex items-center gap-2 shadow-sm">
+                <i class="ph-light ph-info text-lg"></i>
+                Cobertura parcial: Acción requerida
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+</body>
+</html>

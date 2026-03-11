@@ -1,5 +1,7 @@
 import { randomBytes } from "node:crypto";
 
+import { assertRuntimeSync } from "./runtime-sync-utils.mjs";
+
 const requiredEnvVars = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"];
 
 const missingEnvVars = requiredEnvVars.filter(
@@ -25,7 +27,8 @@ const stagingBaseUrl =
 const supabaseUrl = process.env.SUPABASE_URL.trim();
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY.trim();
 const smokePassword =
-  process.env.STAGING_SMOKE_PASSWORD?.trim() || `Smoke-${randomBytes(8).toString("hex")}!`;
+  process.env.STAGING_SMOKE_PASSWORD?.trim() ||
+  `Smoke-${randomBytes(8).toString("hex")}!`;
 const smokeEmail =
   process.env.STAGING_SMOKE_EMAIL?.trim() ||
   `staging-smoke+${Date.now()}@alanatours.com`;
@@ -33,7 +36,15 @@ const smokeEmail =
 const requestJson = async (url, init = {}) => {
   const response = await fetch(url, init);
   const rawBody = await response.text();
-  const parsedBody = rawBody.length > 0 ? JSON.parse(rawBody) : null;
+  let parsedBody = null;
+
+  if (rawBody.length > 0) {
+    try {
+      parsedBody = JSON.parse(rawBody);
+    } catch {
+      parsedBody = rawBody;
+    }
+  }
 
   if (!response.ok) {
     throw new Error(
@@ -128,7 +139,7 @@ const createQuoteSession = async (cookieHeader, agencyName) => {
   return body?.quoteSessionId;
 };
 
-const appendOperatorMessage = async (cookieHeader, quoteSessionId, content) => {
+const runCommand = async (cookieHeader, quoteSessionId, commandName, payload) => {
   const { body } = await requestJson(
     `${stagingBaseUrl}/api/quote-sessions/${quoteSessionId}/commands`,
     {
@@ -138,10 +149,8 @@ const appendOperatorMessage = async (cookieHeader, quoteSessionId, content) => {
         Cookie: cookieHeader,
       },
       body: JSON.stringify({
-        commandName: "append_operator_message",
-        payload: {
-          content,
-        },
+        commandName,
+        payload,
       }),
     },
   );
@@ -179,10 +188,13 @@ const runScenario = async (cookieHeader, scenario) => {
   const quoteSessionId = await createQuoteSession(cookieHeader, "Staging Smoke");
   assert(quoteSessionId, `${scenario.name}:quote_session_not_created`);
 
-  const commandResult = await appendOperatorMessage(
+  const commandResult = await runCommand(
     cookieHeader,
     quoteSessionId,
-    scenario.content,
+    "append_operator_message",
+    {
+      content: scenario.content,
+    },
   );
   const record = await getQuoteRecord(cookieHeader, quoteSessionId);
 
@@ -232,10 +244,90 @@ const runScenario = async (cookieHeader, scenario) => {
   };
 };
 
+const runTransferAfterHotelChoiceScenario = async (cookieHeader) => {
+  const quoteSessionId = await createQuoteSession(
+    cookieHeader,
+    "Staging Smoke Transfer After Hotel",
+  );
+  assert(quoteSessionId, "transfer_after_hotel_choice:quote_session_not_created");
+
+  const partialResult = await runCommand(
+    cookieHeader,
+    quoteSessionId,
+    "append_operator_message",
+    {
+      content:
+        "Need hotel and transfer from Palma airport to the hotel in Majorca from 2026-05-08 to 2026-05-10 for 2 adults",
+    },
+  );
+  const partialRecord = await getQuoteRecord(cookieHeader, quoteSessionId);
+  const hotelOptionId = partialRecord.shortlists?.find(
+    (shortlist) => shortlist.serviceLine === "hotel",
+  )?.items?.[0]?.id;
+
+  assert(
+    partialResult.nextAction === "await_clarification_answer",
+    `transfer_after_hotel_choice:unexpected_partial_action:${partialResult.nextAction}`,
+  );
+  assert(
+    partialRecord.session.status === "clarifying",
+    `transfer_after_hotel_choice:unexpected_partial_status:${partialRecord.session.status}`,
+  );
+  assert(
+    hasSupplierSource(partialRecord, "hotelbeds_hotels"),
+    "transfer_after_hotel_choice:missing_hotel_source",
+  );
+  assert(
+    partialRecord.intake?.readinessByServiceLine?.transfer === "blocked",
+    "transfer_after_hotel_choice:transfer_not_initially_blocked",
+  );
+  assert(
+    typeof hotelOptionId === "string" && hotelOptionId.length > 0,
+    "transfer_after_hotel_choice:hotel_option_missing",
+  );
+
+  const selectResult = await runCommand(
+    cookieHeader,
+    quoteSessionId,
+    "select_option_for_cart",
+    {
+      optionId: hotelOptionId,
+    },
+  );
+  const selectedRecord = await getQuoteRecord(cookieHeader, quoteSessionId);
+
+  assert(
+    selectResult.nextAction === "bundle_blocked",
+    `transfer_after_hotel_choice:unexpected_select_action:${selectResult.nextAction}`,
+  );
+  assert(
+    selectedRecord.session.status === "reviewing",
+    `transfer_after_hotel_choice:unexpected_select_status:${selectedRecord.session.status}`,
+  );
+  assert(
+    selectedRecord.intake?.readinessByServiceLine?.transfer === "ready",
+    "transfer_after_hotel_choice:transfer_not_ready_after_hotel",
+  );
+  assert(
+    hasSupplierSource(selectedRecord, "hotelbeds_transfers"),
+    "transfer_after_hotel_choice:missing_transfer_source",
+  );
+
+  return {
+    hotelOptionId,
+    name: "transfer_after_hotel_choice",
+    nextAction: selectResult.nextAction,
+    quoteSessionId,
+    status: selectedRecord.session.status,
+    supplierSources: selectedRecord.shortlists.flatMap((shortlist) =>
+      shortlist.items.map((item) => item?.supplierMetadata?.source ?? "unknown"),
+    ),
+  };
+};
+
 const scenarios = [
   {
-    content:
-      "Need hotel in Madrid from 2026-05-01 to 2026-05-05 for 2 adults",
+    content: "Need hotel in Madrid from 2026-05-01 to 2026-05-05 for 2 adults",
     expectedNextAction: "results_ready",
     expectedSources: ["hotelbeds_hotels"],
     expectedStatus: "reviewing",
@@ -273,6 +365,18 @@ const main = async () => {
   let userId = null;
 
   try {
+    const runtimeSyncCheck = await assertRuntimeSync({
+      expectedModes: {
+        AI_PROVIDER: "openai",
+        AUTH_MODE: "supabase",
+        HOTELBEDS_PROVIDER: "hotelbeds",
+        QUOTE_EXPORTS_BUCKET: "quote-exports",
+        QUOTE_REPOSITORY_MODE: "supabase",
+      },
+      requestJson,
+      stagingBaseUrl,
+    });
+
     userId = await createSmokeUser();
     assert(userId, "smoke_user_not_created");
 
@@ -285,13 +389,16 @@ const main = async () => {
       results.push(await runScenario(login.cookieHeader, scenario));
     }
 
+    results.push(await runTransferAfterHotelChoiceScenario(login.cookieHeader));
+
     console.log(
       JSON.stringify(
         {
           ok: true,
+          results,
+          runtimeSync: runtimeSyncCheck,
           stagingBaseUrl,
           userEmail: smokeEmail,
-          results,
         },
         null,
         2,

@@ -6,12 +6,14 @@ import { defineConfig, devices } from "@playwright/test";
 const currentDirectory = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  fullyParallel: true,
+  fullyParallel: false,
   testDir: "./e2e",
+  timeout: 60000,
   use: {
     baseURL: "http://localhost:3000",
     trace: "retain-on-failure",
   },
+  workers: 1,
   webServer: {
     command: "pnpm dev",
     cwd: currentDirectory,

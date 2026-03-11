@@ -11,10 +11,32 @@ describe("quote state machine", () => {
     expect(canTransitionSessionState("draft", "export_ready")).toBe(false);
   });
 
+  it("allows clarifying to move into reviewing when partial results become actionable", () => {
+    expect(canTransitionSessionState("clarifying", "reviewing")).toBe(true);
+  });
+
   it("allows archive only from allowed states", () => {
     expect(assertCommandAllowed("draft", "archive_quote_session")).toBe(true);
     expect(assertCommandAllowed("archived", "archive_quote_session")).toBe(
       false,
+    );
+  });
+
+  it("allows cart commands from clarifying when a partial shortlist already exists", () => {
+    expect(assertCommandAllowed("clarifying", "select_option_for_cart")).toBe(
+      true,
+    );
+  });
+
+  it("allows continuity commands required by the workbench views", () => {
+    expect(assertCommandAllowed("archived", "restore_quote_session")).toBe(
+      true,
+    );
+    expect(
+      assertCommandAllowed("reviewing", "confirm_recommendation_mode"),
+    ).toBe(true);
+    expect(assertCommandAllowed("export_ready", "request_more_options")).toBe(
+      true,
     );
   });
 });

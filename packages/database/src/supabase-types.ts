@@ -117,6 +117,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      operator_notes: {
+        Row: {
+          content: string;
+          created_at: string;
+          id: string;
+          quote_session_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          content: string;
+          created_at?: string;
+          id?: string;
+          quote_session_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          content?: string;
+          created_at?: string;
+          id?: string;
+          quote_session_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       structured_intakes: {
         Row: {
           contradictions: Json;
@@ -147,6 +171,33 @@ export type Database = {
           quote_session_id?: string;
           readiness_snapshot?: Json;
           requested_service_lines?: Json;
+        };
+        Relationships: [];
+      };
+      selected_quote_items: {
+        Row: {
+          created_at: string;
+          id: string;
+          option_snapshot: Json;
+          quote_session_id: string;
+          service_line: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          option_snapshot: Json;
+          quote_session_id: string;
+          service_line: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          option_snapshot?: Json;
+          quote_session_id?: string;
+          service_line?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };
@@ -246,6 +297,84 @@ export type Database = {
           payload?: Json;
           quote_session_id?: string;
           summary?: string;
+        };
+        Relationships: [];
+      };
+      quote_exports: {
+        Row: {
+          active_quote_version: number;
+          created_at: string;
+          file_name: string;
+          file_size_bytes: number;
+          id: string;
+          mime_type: string;
+          quote_session_id: string;
+          snapshot_id: string;
+          storage_bucket: string;
+          storage_path: string;
+        };
+        Insert: {
+          active_quote_version: number;
+          created_at?: string;
+          file_name: string;
+          file_size_bytes: number;
+          id?: string;
+          mime_type: string;
+          quote_session_id: string;
+          snapshot_id: string;
+          storage_bucket: string;
+          storage_path: string;
+        };
+        Update: {
+          active_quote_version?: number;
+          created_at?: string;
+          file_name?: string;
+          file_size_bytes?: number;
+          id?: string;
+          mime_type?: string;
+          quote_session_id?: string;
+          snapshot_id?: string;
+          storage_bucket?: string;
+          storage_path?: string;
+        };
+        Relationships: [];
+      };
+      quote_versions: {
+        Row: {
+          change_reason: string;
+          coverage_state: string;
+          created_at: string;
+          diff_summary: string | null;
+          id: string;
+          payload: Json;
+          quote_session_id: string;
+          updated_at: string;
+          version_number: number;
+          version_state: string;
+        };
+        Insert: {
+          change_reason: string;
+          coverage_state: string;
+          created_at?: string;
+          diff_summary?: string | null;
+          id?: string;
+          payload?: Json;
+          quote_session_id: string;
+          updated_at?: string;
+          version_number: number;
+          version_state: string;
+        };
+        Update: {
+          change_reason?: string;
+          coverage_state?: string;
+          created_at?: string;
+          diff_summary?: string | null;
+          id?: string;
+          payload?: Json;
+          quote_session_id?: string;
+          updated_at?: string;
+          version_number?: number;
+          version_state?: string;
         };
         Relationships: [];
       };

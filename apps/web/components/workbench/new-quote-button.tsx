@@ -21,7 +21,7 @@ export const NewQuoteButton = () => {
     });
 
     const payload = (await response.json()) as { quoteSessionId: string };
-    router.push(`/quotes/${payload.quoteSessionId}`);
+    router.push(`/quotes/${payload.quoteSessionId}/conversation`);
     router.refresh();
   };
 
@@ -32,7 +32,7 @@ export const NewQuoteButton = () => {
       onClick={createQuote}
       type="button"
     >
-      {isCreating ? "Creating..." : "New quote"}
+      {isCreating ? "Creando..." : "Nueva cotización"}
     </button>
   );
 };

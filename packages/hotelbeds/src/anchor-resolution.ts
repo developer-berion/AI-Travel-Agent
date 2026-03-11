@@ -16,6 +16,19 @@ type DestinationAnchorConfig = {
   transferLocations: TransferAnchor[];
 };
 
+export type ResolvedDestinationAnchor = {
+  activityDestinationCode: string;
+  canonicalKey: string;
+  canonicalName: string;
+  hotelDestinationCode: string;
+};
+
+export type ResolvedTransferPropertyAnchor = {
+  code: string;
+  label: string;
+  type: string;
+};
+
 const destinationRegistry: DestinationAnchorConfig[] = [
   {
     activityDestinationCode: "BCN",
@@ -149,6 +162,14 @@ const destinationRegistry: DestinationAnchorConfig[] = [
       },
     ],
   },
+  {
+    activityDestinationCode: "SMV",
+    aliases: ["smallville"],
+    canonicalName: "Smallville",
+    hotelDestinationCode: "SMV",
+    transferAirports: [],
+    transferLocations: [],
+  },
 ];
 
 const normalizeText = (value: string) =>
@@ -183,6 +204,68 @@ const findDestinationConfig = (
   );
 };
 
+export const resolveSupportedDestinationAnchor = (input: {
+  destination?: string | null;
+  raw?: string | null;
+}): ResolvedDestinationAnchor | null => {
+  const config = findDestinationConfig(
+    input.destination ?? "",
+    input.raw ?? "",
+  );
+
+  if (!config) {
+    return null;
+  }
+
+  return {
+    activityDestinationCode: config.activityDestinationCode,
+    canonicalKey: normalizeText(config.canonicalName),
+    canonicalName: config.canonicalName,
+    hotelDestinationCode: config.hotelDestinationCode,
+  };
+};
+
+export const extractSupportedDestinationKey = (text: string) =>
+  resolveSupportedDestinationAnchor({
+    destination: text,
+    raw: text,
+  })?.canonicalKey ?? "";
+
+export const resolveTransferPropertyAnchor = (input: {
+  destination?: string | null;
+  hotelCode?: string | null;
+  hotelName?: string | null;
+  raw?: string | null;
+}): ResolvedTransferPropertyAnchor | null => {
+  const config = findDestinationConfig(
+    input.destination ?? input.hotelName ?? "",
+    `${input.raw ?? ""} ${input.hotelName ?? ""}`.trim(),
+  );
+
+  if (!config) {
+    return null;
+  }
+
+  const hotelCode = getStringField(input.hotelCode);
+  const exactCodeMatch = hotelCode
+    ? config.transferLocations.find((anchor) => anchor.code === hotelCode)
+    : null;
+  const namedMatch = input.hotelName
+    ? findAnchorMatch(input.hotelName, config.transferLocations)?.anchor
+    : null;
+  const anchor = exactCodeMatch ?? namedMatch;
+
+  if (!anchor) {
+    return null;
+  }
+
+  return {
+    code: anchor.code,
+    label: anchor.label,
+    type: anchor.type,
+  };
+};
+
 const findAnchorMatch = (text: string, anchors: TransferAnchor[]) => {
   const normalizedText = normalizeText(text);
   let bestMatch: {
@@ -206,8 +289,81 @@ const findAnchorMatch = (text: string, anchors: TransferAnchor[]) => {
   return bestMatch;
 };
 
+const getRouteAnchorFromFields = (
+  fields: StructuredIntake["extractedFields"],
+  prefix: "transferFrom" | "transferTo",
+): TransferAnchor | null => {
+  const code = getStringField(fields[`${prefix}Code`]);
+  const type = getStringField(fields[`${prefix}Type`]);
+
+  if (!code || !type) {
+    return null;
+  }
+
+  return {
+    aliases: [],
+    code,
+    label: getStringField(fields[`${prefix}Label`]) || code,
+    type,
+  };
+};
+
+const getStructuredPropertyAnchor = (
+  fields: StructuredIntake["extractedFields"],
+) => {
+  const code = getStringField(fields.transferPropertyCode);
+  const type = getStringField(fields.transferPropertyType);
+
+  if (!code || !type) {
+    return null;
+  }
+
+  return {
+    aliases: [],
+    code,
+    label:
+      getStringField(fields.transferPropertyLabel) ||
+      getStringField(fields.transferPropertyName) ||
+      "Selected property",
+    type,
+  } satisfies TransferAnchor;
+};
+
+const hasStructuredPropertyRouteMention = (text: string) => {
+  const normalizedText = normalizeText(text);
+  return [
+    /\bto (the )?hotel\b/,
+    /\bto (the )?selected hotel\b/,
+    /\bto (the )?property\b/,
+    /\bto (the )?selected property\b/,
+    /\bto (the )?accommodation\b/,
+    /\bfrom (the )?hotel\b/,
+    /\bfrom (the )?selected hotel\b/,
+    /\bfrom (the )?property\b/,
+    /\bfrom (the )?selected property\b/,
+    /\bfrom (the )?accommodation\b/,
+    /\bal hotel\b/,
+    /\bdel hotel\b/,
+    /\ba la propiedad\b/,
+    /\bde la propiedad\b/,
+  ].some((pattern) => pattern.test(normalizedText));
+};
+
 const detectTransferDirection = (text: string) => {
   const normalizedText = normalizeText(text);
+
+  const hotelToAirportPattern =
+    /\b(from|pickup at|pick up at|de|del)\b.*\b(hotel|property|accommodation)\b.*\b(to|drop off at|dropoff at|al)\b.*\b(airport|aeropuerto)\b/;
+  const airportToHotelPattern =
+    /\b(from|pickup from|pick up from|del)\b.*\b(airport|aeropuerto)\b.*\b(to|drop off at|dropoff at|al)\b.*\b(hotel|property|accommodation)\b/;
+
+  if (hotelToAirportPattern.test(normalizedText)) {
+    return "property_to_airport" as const;
+  }
+
+  if (airportToHotelPattern.test(normalizedText)) {
+    return "airport_to_property" as const;
+  }
 
   if (
     normalizedText.includes("to airport") ||
@@ -236,6 +392,19 @@ const resolveTransferAnchors = (
 ) => {
   const fields = { ...intake.extractedFields };
   const raw = getStringField(fields.raw);
+  const directFromAnchor = getRouteAnchorFromFields(fields, "transferFrom");
+  const directToAnchor = getRouteAnchorFromFields(fields, "transferTo");
+
+  if (directFromAnchor && directToAnchor) {
+    fields.transferFromLabel = directFromAnchor.label;
+    fields.transferToLabel = directToAnchor.label;
+
+    return {
+      extractedFields: fields,
+      note: `Transfer route resolved from ${directFromAnchor.label} to ${directToAnchor.label}.`,
+      readiness: "ready" as const,
+    };
+  }
 
   if (!destinationConfig) {
     return {
@@ -246,10 +415,19 @@ const resolveTransferAnchors = (
   }
 
   const airportMatch = findAnchorMatch(raw, destinationConfig.transferAirports);
-  const locationMatch = findAnchorMatch(
+  const explicitLocationMatch = findAnchorMatch(
     raw,
     destinationConfig.transferLocations,
   );
+  const structuredPropertyAnchor = getStructuredPropertyAnchor(fields);
+  const locationMatch =
+    explicitLocationMatch ??
+    (structuredPropertyAnchor && hasStructuredPropertyRouteMention(raw)
+      ? {
+          anchor: structuredPropertyAnchor,
+          index: Number.MAX_SAFE_INTEGER,
+        }
+      : null);
 
   if (airportMatch && locationMatch) {
     const direction = detectTransferDirection(raw);
@@ -264,8 +442,10 @@ const resolveTransferAnchors = (
       : airportMatch.anchor;
 
     fields.transferFromCode = fromAnchor.code;
+    fields.transferFromLabel = fromAnchor.label;
     fields.transferFromType = fromAnchor.type;
     fields.transferToCode = toAnchor.code;
+    fields.transferToLabel = toAnchor.label;
     fields.transferToType = toAnchor.type;
 
     return {

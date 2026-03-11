@@ -52,18 +52,16 @@ export const LoginForm = ({ authMode }: { authMode: AuthMode }) => {
 
   return (
     <form className="auth-card" onSubmit={onSubmit}>
-      <div>
-        <p className="eyebrow">Operator Access</p>
+      <div className="auth-header">
+        <p className="eyebrow">Asistente operatorio</p>
         <h1>Alana Travel Quoting OS</h1>
         <p className="muted">
           {authMode === "mock"
-            ? "Mock auth mantiene el workbench operativo en local mientras Supabase y la provision real de operadores se endurecen."
-            : "Supabase Auth opera en modo invite-only con cuentas provisionadas por admin."}
+            ? "Acceso local listo para revisar el workbench y validar la experiencia sin depender del entorno real."
+            : "Ingresa con tu cuenta provisionada para continuar con la operación de cotizaciones."}
         </p>
         <p className="auth-mode-badge">
-          {authMode === "mock"
-            ? "Mock auth baseline"
-            : "Supabase auth baseline"}
+          {authMode === "mock" ? "Modo local" : "Acceso provisionado"}
         </p>
       </div>
 
@@ -81,11 +79,11 @@ export const LoginForm = ({ authMode }: { authMode: AuthMode }) => {
       </label>
 
       <label className="field">
-        <span>Password</span>
+        <span>Contraseña</span>
         <input
           autoComplete="current-password"
           placeholder={
-            authMode === "mock" ? "mock-password" : "Enter your password"
+            authMode === "mock" ? "mock-password" : "Ingresa tu contraseña"
           }
           onChange={(event) => setPassword(event.target.value)}
           type="password"
@@ -96,11 +94,7 @@ export const LoginForm = ({ authMode }: { authMode: AuthMode }) => {
       {error ? <p className="error-text">{error}</p> : null}
 
       <button className="primary-button" disabled={isSubmitting} type="submit">
-        {isSubmitting
-          ? "Signing in..."
-          : authMode === "mock"
-            ? "Enter workspace"
-            : "Sign in"}
+        {isSubmitting ? "Ingresando..." : "Ingresar al workspace"}
       </button>
     </form>
   );

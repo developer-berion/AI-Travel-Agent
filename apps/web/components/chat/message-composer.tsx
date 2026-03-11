@@ -5,6 +5,9 @@ import { type FormEvent, useState } from "react";
 
 import type { QuoteSessionState } from "@alana/domain";
 
+import { TransientFailureNotice } from "@/components/quote/transient-failure-notice";
+import { runQuoteCommandRequest } from "@/lib/quote-command-client";
+
 export const MessageComposer = ({
   quoteSessionId,
   status,
@@ -14,60 +17,79 @@ export const MessageComposer = ({
 }) => {
   const router = useRouter();
   const [content, setContent] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const submit = async (
+    event?: FormEvent<HTMLFormElement>,
+    overrideContent?: string,
+  ) => {
+    event?.preventDefault();
 
-    if (!content.trim()) {
+    const contentToSubmit = overrideContent ?? content;
+
+    if (!contentToSubmit.trim()) {
       return;
     }
 
+    setError(null);
     setIsSubmitting(true);
 
-    await fetch(`/api/quote-sessions/${quoteSessionId}/commands`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    try {
+      await runQuoteCommandRequest({
+        quoteSessionId,
         commandName:
           status === "clarifying"
             ? "submit_clarification_answer"
             : "append_operator_message",
         payload: {
-          content,
+          content: contentToSubmit,
         },
-      }),
-    });
+      });
 
-    setContent("");
-    setIsSubmitting(false);
-    router.refresh();
+      setContent("");
+      router.refresh();
+    } catch (submissionError) {
+      setError(
+        submissionError instanceof Error
+          ? submissionError.message
+          : "No se pudo enviar el mensaje.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <form className="composer" onSubmit={submit}>
       <textarea
         onChange={(event) => setContent(event.target.value)}
-        placeholder="Paste or write the traveler request. Example: Need hotel and transfer in Madrid from 2026-05-01 to 2026-05-05 for 2 adults."
-        rows={4}
+        placeholder="Escribe el pedido del viajero o responde la aclaración visible para continuar."
+        rows={3}
         value={content}
       />
       <div className="composer-actions">
         <p className="muted">
           {status === "clarifying"
-            ? "This answer will be treated as clarification."
-            : "The orchestrator will extract intent, validate blockers and simulate the next node."}
+            ? "Esta respuesta se usará para destrabar el caso y retomar la continuidad."
+            : "Alana validará blockers, actualizará el caso y propondrá el siguiente paso visible."}
         </p>
         <button
           className="primary-button"
           disabled={isSubmitting}
           type="submit"
         >
-          {isSubmitting ? "Submitting..." : "Send"}
+          {isSubmitting ? "Enviando..." : "Enviar"}
         </button>
       </div>
+      {error ? (
+        <TransientFailureNotice
+          error={error}
+          onRetry={() => {
+            void submit(undefined, content);
+          }}
+        />
+      ) : null}
     </form>
   );
 };
